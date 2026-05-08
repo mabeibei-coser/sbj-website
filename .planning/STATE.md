@@ -10,6 +10,17 @@
 **Status:** CODE COMPLETE — 等待 W0 前置条件（腾讯云 + API key + GitHub secrets）后部署验收
 **Last Updated:** 2026-05-08
 
+## 生产 URL（甲方已分配）
+
+| 模块 | URL | 对应路由 |
+|------|-----|---------|
+| 智能职业诊断 | https://h100.jsai100.com/a300 | `app/a300/` |
+| 智能创业诊断 | https://h100.jsai100.com/a400 | `app/a400/` |
+| 政策与智能问答 | https://h100.jsai100.com/a500 | `app/a500/` |
+
+**域名**：`h100.jsai100.com`（jsai100.com 主体，ICP 已备案 → **ICP blocker 解除**）  
+**备注**：Phase 2 路由 app/(citizen)/ 要改成 app/a300|a400|a500/ 对应上述路径
+
 ## What's Done
 
 - [x] V8 plan 完成（C:\Users\admin\.claude\plans\1-giggly-cat.md）
@@ -71,7 +82,7 @@
 | 腾讯云 CDB 未开通 | `prisma migrate deploy` 阻塞 | W0 第一步 |
 | LLM API key 未到手 | T4 多供应商 fallback 无法验证 | W0 申请 3 家 |
 | GitHub Secrets 未配 | deploy.yml 触发后 SSH 失败 | 开通 Lighthouse 后配 |
-| ICP 备案未下来 | 外网域名访问不了 | 备案已提交则不影响 CI/CD |
+| ~~ICP 备案未下来~~ | ~~外网域名访问不了~~ | **已解除**：部署在 h100.jsai100.com，jsai100.com 主体已备案 |
 | 等保是否要求未确认 | 影响后续 phase 安全要求 | 本周问甲方 |
 | SOW 未签 | 合同层面交付风险 | 整理 V8 plan 走读给甲方 |
 | 政策 PDF 原件未到手 | Phase 2 wiki KB 阻塞 | 问甲方要文件清单 |
