@@ -5,10 +5,12 @@
   "description": "W0 PoC: validate DeepSeek-driven wiki compilation on 3 中文政策素材",
   "type": "module",
   "scripts": {
+    "smoke": "tsx scripts/smoke-test.ts",
     "pdf-to-md": "tsx scripts/pdf-to-md.ts",
     "url-to-md": "tsx scripts/url-to-md.ts",
     "compile": "tsx scripts/compile.ts",
-    "evaluate": "tsx scripts/evaluate.ts"
+    "evaluate": "tsx scripts/evaluate.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "openai": "^4.79.0",

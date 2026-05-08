@@ -13,7 +13,7 @@
  * Usage: npm run compile
  */
 
-import 'dotenv/config';
+import '../lib/env.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chat, accumulate, checkBudget, type TokenBudget } from '../lib/deepseek-client.js';

@@ -12,7 +12,7 @@
  * Usage: npm run evaluate
  */
 
-import 'dotenv/config';
+import '../lib/env.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 

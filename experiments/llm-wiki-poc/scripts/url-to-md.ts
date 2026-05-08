@@ -9,7 +9,7 @@
  *   npm run url-to-md -- "https://..." # 自动从 URL 推 slug
  */
 
-import 'dotenv/config';
+import '../lib/env.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 

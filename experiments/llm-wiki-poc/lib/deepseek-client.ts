@@ -1,5 +1,5 @@
+import './env.js';
 import OpenAI from 'openai';
-import 'dotenv/config';
 
 const apiKey = process.env.DEEPSEEK_API_KEY;
 const baseURL = process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com/v1';

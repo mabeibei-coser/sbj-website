@@ -9,7 +9,7 @@
  *   npm run pdf-to-md -- sources-raw/policy-1.pdf --slug=unemployment-rules
  */
 
-import 'dotenv/config';
+import '../lib/env.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
