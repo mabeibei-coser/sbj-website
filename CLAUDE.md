@@ -68,6 +68,16 @@
 - E2E（Playwright）覆盖三大模块完整流程
 - 单元测试覆盖：量表评分边界、加密/解密、状态机计数器
 
+## Design System
+
+Always read `DESIGN.md` before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match `DESIGN.md`.
+演示参考：`.planning/design-demo.html`。
+
+---
+
 ## Skill routing
 
 When the user's request matches an available skill, invoke it via the Skill tool.
