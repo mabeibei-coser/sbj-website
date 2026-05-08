@@ -1,0 +1,75 @@
+# CI 主工作流 (INF-11)
+# 触发: push / PR; 跑 typecheck + lint + unit test + build
+# Playwright e2e + LLM eval suite 留给独立 workflow (依赖 docker postgres)
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npm run typecheck
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npm run lint
+
+  unit-tests:
+    name: unit tests + LLM eval skeleton
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npm run test:unit
+      - run: npm run test:llm-eval
+
+  build:
+    name: next build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate
+      # build 不需要真实 DATABASE_URL；仅 prisma client 生成需要 schema.prisma
+      - run: npm run build
+        env:
+          # 占位 env，让 .env 校验通过；不会真连 DB
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          FIELD_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleS0zMi1ieXRlcy1iYXNlNjQ=
+          ADMIN_PASSWORD_HASH: JDJhJDEyJEYwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMy4=
+          ADMIN_SESSION_PASSWORD: ci-test-session-password-at-least-32-chars-long
