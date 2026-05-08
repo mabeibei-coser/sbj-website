@@ -81,7 +81,7 @@
 **Plans:** 7 plans
 
 Plans:
-- [ ] 02-01-wiki-compile-PLAN.md — Wiki 编译 CLI + Prisma 写库 + audit（QA-02 / QA-03 / QA-09）
+- [x] 02-01-wiki-compile-PLAN.md — Wiki 编译 CLI + Prisma 写库 + audit（QA-02 / QA-03 / QA-09）— 2026-05-09 PASS（commits a063b7b + b651755）
 - [ ] 02-02-qa-foundation-PLAN.md — QA 三层防护 + 自由问 API + 4 测试套件（QA-04 / QA-05 / QA-06 / QA-07）
 - [ ] 02-03-hot-questions-PLAN.md — 3 热点 .md + GET /api/qa/hot（QA-08 / QA-10）
 - [ ] 02-04-citizen-ui-PLAN.md — globals.css + shadcn ui + /qa 页面 + wiki 详情（QA-01 / QA-04 / QA-05 / QA-08 / FE-01 / FE-03）

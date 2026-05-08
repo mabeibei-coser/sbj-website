@@ -6,8 +6,8 @@
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）执行启动
-**Status:** EXECUTING — 7 plans / 5 waves，**DB 就绪**（用 Lighthouse 自建 Postgres 14 替代 CDB；建独立 sbj_dev 库与 sbj_prod 隔离），SSH tunnel 模式打通本地开发，9 表 schema 应用，32 单测全过。Wave 1 启动中。
+**Phase:** Phase 2 — 政策问答（W2）Wave 1 完成，Wave 2 ready
+**Status:** EXECUTING — 7 plans / 5 waves，**Wave 1 (02-01 wiki-compile) PASS**：4 CLI + 2 prompt + wiki-config + npm scripts 全部就位；smoke 验 callLlm OK；publish 真写库（WikiPage(kb=policy)=1 + WikiPageVersion=1 + AuditLog wiki.publish=1）；2 篇微信文章存档（自检产物）。Wave 2（02-02 自由问 + 02-03 热点 并行）可启动。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -66,6 +66,16 @@
   - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
   - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
   - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
+- [x] **Phase 2 Wave 1 — Plan 02-01 wiki-compile** — 2026-05-09
+  - 2 commits：a063b7b（4 CLI + 2 prompt + wiki-config + npm scripts + .gitignore + .gitkeep）+ b651755（拷贝 PoC 3 份 sources 到 canonical）
+  - **smoke**：`npm run wiki:smoke` OK，vendor=deepseek model=deepseek-v4-flash 1376ms，LlmCallLog caller=qa.smoke 写入
+  - **dry-run**：`npm run wiki:compile -- --kb=policy --sources=experiments/llm-wiki-poc/sources --dry-run` 跑通，21k tokens，47s，不写 WikiPage 表
+  - **publish**：`npm run wiki:compile -- --kb=policy --sources=knowledge/policy-sources --publish` 跑通，27s 14760 tokens，CREATED policy/startup-support v1
+  - **DB 状态**：WikiPage(kb=policy)=1 / WikiPageVersion=1（v1, editorId=system:wiki-compile）/ AuditLog wiki.publish=1（actor=system:wiki-compile, targetType=wiki_page）
+  - **微信文章存档（Task 3 self-check）**：用 PoC 已知 URL 抓 2 篇，frontmatter 含 sourceUrl 全合规，清洗后 0 个 qrcode/script/关注公众号 残留；wechat-archives/*.md 不入 git（容量+版权）
+  - **caller 命名规范（D-25）**：qa.smoke / qa.compile.classify / qa.compile.compile 三个 caller 都按规范写 LlmCallLog
+  - **deviation 处理**：tsx 加 --conditions=react-server / dotenv 显式读 .env.local / Buffer→BodyInit unknown 转换 / 加 MicroMessenger UA 双档 fallback / publishTopic 实现并入 Task 1
+  - 详见：`.planning/phases/02-policy-qa/02-01-wiki-compile-SUMMARY.md`
 
 ## What's Next
 
@@ -151,7 +161,8 @@
 | 2026-05-08 | Phase 0 | Phase 1 代码完成 | 11 tasks / 12 commits / 待 W0 前置条件后部署验收 |
 | 2026-05-09 | Phase 1 | Phase 2 规划完成 | 7 plans / 5 waves / autoplan B1+F2+F3 修复 |
 | 2026-05-09 | Phase 2 plan | Phase 2 **Wave 1 ready** | npm install + prisma generate + .env.local 完成（DeepSeek + 讯飞配齐） / 32 单测 PASS |
+| 2026-05-09 | Wave 1 ready | Wave 1 PASS | Plan 02-01 wiki-compile 完成（2 commits a063b7b + b651755）；smoke + dry-run + publish 三档全通；WikiPage 写库链路验证；Wave 2 ready |
 
 ---
 
-*Last updated: 2026-05-09 — W0 本地环境就绪：npm install + prisma generate + .env.local（DeepSeek + 讯飞 + admin hash），32 单测全过，Wave 1 可启动*
+*Last updated: 2026-05-09 — Phase 2 Wave 1 (02-01 wiki-compile) PASS：4 CLI + 2 prompt + npm scripts + 真写库验证，2 commits 提交*
