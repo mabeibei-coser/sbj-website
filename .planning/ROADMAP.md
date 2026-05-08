@@ -54,7 +54,7 @@
 **Weeks:** W1
 **Requirements:** INF-03 ~ INF-12
 **Success Criteria:**
-1. 单 Next.js 应用 monorepo 结构跑起来（市民端路由 + /admin 路由）
+1. 单 Next.js 应用 monorepo 结构跑起来（市民端路由 + /admin 路由)
 2. `lib/llm-client.ts` 多供应商抽象层跑通最简调用（DeepSeek 主成功 + 切换备成功）
 3. 4 张审计表 + 业务表都建好（含字段加密 phone / 简历内容）
 4. middleware.ts 鉴权生效（/api/admin/* 必须 staff token）
@@ -77,6 +77,24 @@
 2. 3 热点问题（Q1/Q2/Q3）一键问展示预设答案，不调 LLM
 3. 自由问命中 wiki 时给出真实引用 + 1000 字内 + 免责声明；未命中时给兜底转窗口文案
 4. LLM eval suite 50 题 golden Q&A 准确率 ≥ 80% + 出处校验通过率 ≥ 80%
+
+**Plans:** 7 plans
+
+Plans:
+- [ ] 02-01-wiki-compile-PLAN.md — Wiki 编译 CLI + Prisma 写库 + audit（QA-02 / QA-03 / QA-09）
+- [ ] 02-02-qa-foundation-PLAN.md — QA 三层防护 + 自由问 API + 4 测试套件（QA-04 / QA-05 / QA-06 / QA-07）
+- [ ] 02-03-hot-questions-PLAN.md — 3 热点 .md + GET /api/qa/hot（QA-08 / QA-10）
+- [ ] 02-04-citizen-ui-PLAN.md — globals.css + shadcn ui + /qa 页面 + wiki 详情（QA-01 / QA-04 / QA-05 / QA-08 / FE-01 / FE-03）
+- [ ] 02-05-admin-wiki-editor-PLAN.md — /admin/wiki 列表 + 编辑器 + PUT API（QA-12）
+- [ ] 02-06-llm-eval-PLAN.md — 50 题 golden Q&A + run.ts 阈值卡死 + USER OWN checkpoint（QA-11）
+- [ ] 02-07-e2e-PLAN.md — Playwright 市民 + admin e2e 全流程（QA-01 / QA-04~08 / QA-12）
+
+**Wave 结构（5 个 wave）:**
+- Wave 1: 02-01（Wiki 编译 — 数据基础设施）
+- Wave 2 (并行): 02-02（QA 三层防护）+ 02-03（热点 .md / API）
+- Wave 3 (并行): 02-04（市民端 UI）+ 02-05（admin 编辑器）
+- Wave 4: 02-06（LLM eval suite，需 02-02 service 已就位）
+- Wave 5: 02-07（e2e 全集成）
 
 **Risks & Notes:**
 - W2 末出 demo 给甲方，是建立项目信心的关键节点
@@ -211,3 +229,4 @@ W7 联调 → W8 合规 → W9-W10 交付
 ---
 
 *Generated: 2026-05-08, from V8 plan*
+*Phase 2 plans added: 2026-05-08*

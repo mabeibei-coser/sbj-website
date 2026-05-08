@@ -2,6 +2,7 @@
 /node_modules
 /.pnp
 .pnp.*
+node_modules/
 
 # testing
 /coverage
@@ -9,22 +10,28 @@
 # next.js
 /.next/
 /out/
+.next/
+out/
 
 # production
 /build
+dist/
 
 # misc
 .DS_Store
-*.pem
 Thumbs.db
+*.pem
 
 # debug
 npm-debug.log*
+*.log
 
 # env files
 .env
 .env.local
 .env*.local
+.env.*.local
+**/.env.local
 
 # vercel
 .vercel
@@ -32,6 +39,10 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
 
 # Claude Code worktree / agent metadata（每台机器独立，不入库）
 /.claude/
