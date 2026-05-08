@@ -6,8 +6,8 @@
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）规划完成，等待执行
-**Status:** PLAN READY — 7 plans / 5 waves，全部 4 blockers + 6 warnings 已修（含 autoplan B1/F2/F3）。等 W0 部署完成（腾讯云 + LLM key + GitHub secrets）即可 `/gsd-execute-phase 2`
+**Phase:** Phase 2 — 政策问答（W2）执行启动
+**Status:** EXECUTING — 7 plans / 5 waves，**DB 就绪**（用 Lighthouse 自建 Postgres 14 替代 CDB；建独立 sbj_dev 库与 sbj_prod 隔离），SSH tunnel 模式打通本地开发，9 表 schema 应用，32 单测全过。Wave 1 启动中。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -51,15 +51,32 @@
   - gsd-plan-checker 出 4 BLK + 6 WRN → 全部修复
   - autoplan CEO+Eng review → B1（pg_trgm）+ F2（consentId）+ F3（lib/citizens.ts）已修
   - 提交：`1441a76 docs(02): Phase 2 plan — 7 plans, 5 waves, all blockers/warnings resolved`
+- [x] **W0 本地开发环境就绪** — 2026-05-09
+  - `npm install`（Next 16.2.3 + Prisma 6.19.3 + bcryptjs + iron-session 等全部装好）
+  - `npx prisma generate`（PrismaClient 生成到 node_modules/@prisma/client）
+  - `.env.local` 创建：FIELD_ENCRYPTION_KEY + ADMIN_SESSION_PASSWORD（48 字节随机）+ ADMIN_PASSWORD_HASH（bcrypt(sbj-dev-2026)，base64 包装防 dotenv 截断）
+  - DeepSeek key 已配（`sk-fe2547f2f338475e89b93636551b7268` + 模型 `deepseek-v4-flash`）
+  - 讯飞 key 已配（career-report 同款 maas-coding 端点 + APIKey:APISecret 格式）
+  - `npm run test:unit` PASS：encryption 16 + llm-client 9 + audit 7 = **32 单测全过**
+- [x] **DB 基建就位（替代 CDB 方案）** — 2026-05-09
+  - **决策**：放弃买 CDB（成本/时间），改用 Lighthouse `124.222.114.47` 上自建 Postgres 14（已存在）
+  - 新建独立开发库 `sbj_dev`（与生产 `sbj_prod` 隔离），`sbj` 用户复用
+  - 装 `pg_trgm` 扩展（autoplan B1 中文搜索方案前提）
+  - 本地 `.env.local` 写入 `DATABASE_URL=postgresql://sbj:<pwd>@localhost:5432/sbj_dev?schema=public` —— 走 SSH tunnel 形式，密码与 prod 相同（生产 .env.production.local 已就位）
+  - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
+  - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
+  - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
 
 ## What's Next
 
 ### Phase 2 执行需要的前置（W0 用户做）
-- [ ] 腾讯云华东（上海）账号开通 + Lighthouse 实例 + PostgreSQL CDB 实例
-- [ ] DeepSeek + 豆包 + 讯飞 三家 LLM API key 充值开通
-- [ ] GitHub Secrets 配 5 项（**SSH 部署相关**，按 docs/RUNBOOK.md §1.2）：`TENCENT_HOST` / `TENCENT_USER` / `TENCENT_SSH_KEY` / `TENCENT_PORT` / `TENCENT_DEPLOY_PATH`
-- [ ] 服务器 `.env.production.local` 配齐（**业务 env**，按 `.env.example`）：`DATABASE_URL` 指 CDB 内网 / `FIELD_ENCRYPTION_KEY` / `ADMIN_PASSWORD_HASH` / `ADMIN_SESSION_PASSWORD` / 3 家 LLM key + base url + model
-- [ ] `prisma migrate deploy` 跑通（创 9 张表）
+- [ ] 腾讯云华东（上海）账号开通 + Lighthouse 实例 + PostgreSQL CDB 实例（**Wave 2 起阻塞**：API 路由要写 DB）
+- [x] DeepSeek key（`deepseek-v4-flash`） — 已填 .env.local
+- [x] 讯飞 key（maas-coding-api / astron-code-latest） — 已填 .env.local
+- [ ] 豆包 API key + 模型名（火山引擎方舟） — `.env.local` 留空（不阻塞，主用 DeepSeek，豆包是 fallback）
+- [ ] GitHub Secrets 配 5 项（**SSH 部署相关**，按 docs/RUNBOOK.md §1.2）：`TENCENT_HOST` / `TENCENT_USER` / `TENCENT_SSH_KEY` / `TENCENT_PORT` / `TENCENT_DEPLOY_PATH`（**Phase 2 完成后 deploy 时才阻塞**）
+- [ ] 服务器 `.env.production.local` 配齐（**业务 env**，按 `.env.example`）：`DATABASE_URL` 指 CDB 内网 / `FIELD_ENCRYPTION_KEY` / `ADMIN_PASSWORD_HASH` / `ADMIN_SESSION_PASSWORD` / 3 家 LLM key + base url + model（**deploy 时才阻塞**）
+- [ ] `prisma migrate deploy` 跑通（创 9 张表 — **Wave 2 起阻塞**）
 - [ ] biz-kb 政策来源（甲方 P2，未到手）+ Q1/Q2 微信文章正式 URL（家人/甲方；knowledge-sources/ 已有 PoC 抓取版可作为 fallback）
 
 > ⚠️ 部署 env 分两处：**SSH 部署相关 5 项进 GitHub Secrets**（CI/CD 用）；**业务 env（DB/加密/LLM key）配在服务器 `.env.production.local`**（运行时用）。两组不要搞混。
@@ -74,9 +91,9 @@
 ### 用户先做的细项清单（合并入上面 Phase 2 前置；保留作详细 reference）
 
 - [ ] 腾讯云华东（上海）账号开通 + **Lighthouse 实例** + **PostgreSQL CDB 实例**创建
-- [ ] **DeepSeek API key**（`DEEPSEEK_API_KEY`）+ 充值 ≥100 元测试额度
-- [ ] **豆包 API key**（`DOUBAO_API_KEY`）+ 配置 `DOUBAO_BASE_URL` / `DOUBAO_MODEL`
-- [ ] **讯飞 API key**（`IFLYTEK_API_KEY`）+ 配置 `IFLYTEK_BASE_URL` / `IFLYTEK_MODEL`
+- [x] **DeepSeek API key**（`DEEPSEEK_API_KEY`）— 已填 .env.local（`deepseek-v4-flash`）
+- [ ] **豆包 API key**（`DOUBAO_API_KEY`）+ 配置 `DOUBAO_BASE_URL` / `DOUBAO_MODEL`（不阻塞 Wave 1，主用 DeepSeek）
+- [x] **讯飞 API key**（`IFLYTEK_API_KEY`）— 已填 .env.local（maas-coding-api / astron-code-latest）
 - [x] GitHub 仓库创建 — `https://github.com/mabeibei-coser/sbj-website.git` 已建
 - [ ] GitHub Actions Secrets 5 项配置（按 docs/RUNBOOK.md §1.2 字段名，不是 DATABASE_URL/SESSION_SECRET 那组）
 - [ ] `.env.production.local` 在 Lighthouse 服务器上配好（DATABASE_URL 指 CDB 内网）
@@ -96,10 +113,10 @@
 
 | Blocker | Impact | Mitigation |
 |---|---|---|
-| 腾讯云 Lighthouse + CDB 未开通 | `prisma migrate deploy` 阻塞 + deploy.yml 没目标主机 | W0 第一步 |
-| LLM API key 未到手 | T4 多供应商 fallback 无法验证 + Phase 2 自由问 API 跑不通 | W0 申请 3 家（DeepSeek + 豆包 + 讯飞）|
-| GitHub Actions Secrets 未配 | deploy.yml SSH 步骤失败 | 开通 Lighthouse 后按 docs/RUNBOOK.md §1.2 配 5 项 TENCENT_* |
-| 服务器 .env.production.local 未配 | 应用启动即崩（FIELD_ENCRYPTION_KEY / ADMIN_SESSION_PASSWORD 缺失会 503）| 按 .env.example 全表填值 |
+| ~~腾讯云 Lighthouse + CDB 未开通~~ | ~~Wave 2+ 阻塞~~ | **已解除**：Lighthouse `124.222.114.47` 早开通；放弃买 CDB，改用 Lighthouse 自建 Postgres 14 + 独立 sbj_dev 库 + SSH tunnel；UAT/上线时再切真 CDB（连接串改一行） |
+| ~~LLM API key 未到手~~ | ~~T4 多供应商 fallback 无法验证~~ | **部分解除**：DeepSeek + 讯飞已配；豆包未配（不阻塞，主用 DeepSeek，豆包是 fallback） |
+| GitHub Actions Secrets 未配 | deploy.yml SSH 步骤失败 | **Phase 2 完成后 deploy 才阻塞**；按 docs/RUNBOOK.md §1.2 配 5 项 TENCENT_* |
+| 服务器 .env.production.local 未配 | 应用启动即崩（FIELD_ENCRYPTION_KEY / ADMIN_SESSION_PASSWORD 缺失会 503）| **deploy 时才阻塞**；按 .env.example 全表填值 |
 | ~~ICP 备案未下来~~ | ~~外网域名访问不了~~ | **已解除**：部署在 h100.jsai100.com，jsai100.com 主体已备案；详见 STATE.md 顶部生产 URL 段（注：docs/ICP-备案-跟踪.md 是基于早期 sbj.jsai100.com 假设，已过时）|
 | 等保是否要求未确认 | 影响后续 phase 安全要求 | 本周问甲方 |
 | SOW 未签 | 合同层面交付风险 | 整理 V8 plan 走读给甲方 |
@@ -124,6 +141,7 @@
 | iron-session 密码缺失策略 | 返回 503 / redirect with error | 静态降级密码可被攻击者利用伪造 session；缺失时直接报错更安全 |
 | Phase 2 中文全文搜索方案 | pg_trgm + word_similarity（autoplan B1） | tsvector('simple') 对中文无词界，整段变单 token，召回近零；pg_trgm 字符三元组无需分词 |
 | Phase 2 consent 查询字段 | phone → HMAC hash（移除 consentId，autoplan F2） | consentId 字段冗余，统一用 phone_hash 查 ConsentRecord，API schema 简化 |
+| Phase 2 开发数据库方案 | Lighthouse 自建 Postgres 14 + sbj_dev 库 + SSH tunnel | CDB 最低规格 ~50 元/月，但 Lighthouse 现成且已装 PG14；建独立 sbj_dev 与 sbj_prod 隔离避免开发污染生产；UAT 阶段再升级真 CDB |
 
 ## Phase Transitions
 
@@ -132,7 +150,8 @@
 | 2026-05-08 | (init) | Phase 0 Slice B PASS | LLM Wiki D1+D2 100/100 |
 | 2026-05-08 | Phase 0 | Phase 1 代码完成 | 11 tasks / 12 commits / 待 W0 前置条件后部署验收 |
 | 2026-05-09 | Phase 1 | Phase 2 规划完成 | 7 plans / 5 waves / autoplan B1+F2+F3 修复 |
+| 2026-05-09 | Phase 2 plan | Phase 2 **Wave 1 ready** | npm install + prisma generate + .env.local 完成（DeepSeek + 讯飞配齐） / 32 单测 PASS |
 
 ---
 
-*Last updated: 2026-05-09 — Phase 2 规划完成 + autoplan review pass + 推送 GitHub + W0 清单 audit（修 GitHub Secrets 名字 + 部分 blocker 解除）*
+*Last updated: 2026-05-09 — W0 本地环境就绪：npm install + prisma generate + .env.local（DeepSeek + 讯飞 + admin hash），32 单测全过，Wave 1 可启动*
