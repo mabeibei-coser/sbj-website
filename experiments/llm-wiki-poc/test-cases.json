@@ -1,0 +1,62 @@
+{
+  "_注": "5 条政策问题样题。compile 出 wiki 后，跑 evaluate.ts 会基于这些问题随机抽样验证。题目偏向具体可核对的事实（金额/年限/材料/窗口），而非主观解读。",
+  "_使用": "用户在拿到甲方真实政策素材后，可调整或替换这些题目，让其更贴合真实素材。本文件作为 W2 LLM eval suite 50 题的种子。",
+
+  "test_cases": [
+    {
+      "id": "TC-01",
+      "question": "失业人员申领失业保险金的具体金额标准是多少？怎么计算？",
+      "expected_facts": [
+        "金额标准（如最低工资的某百分比，或具体元数）",
+        "计算公式或参考依据",
+        "金额随缴费年限/年龄变化的规则（如有）"
+      ],
+      "expected_citations_count": 1,
+      "topic_hint": "unemployment-insurance"
+    },
+    {
+      "id": "TC-02",
+      "question": "失业保险金最长能领几个月？需要满足什么条件？",
+      "expected_facts": [
+        "最长领取月数（如 24 个月）",
+        "失业前缴费年限要求",
+        "申领的时限要求（多少日内申请）"
+      ],
+      "expected_citations_count": 1,
+      "topic_hint": "unemployment-insurance"
+    },
+    {
+      "id": "TC-03",
+      "question": "黄浦区市民申请创业担保贷款的最高额度是多少？需要哪些材料？",
+      "expected_facts": [
+        "贷款最高额度（具体金额）",
+        "申请条件（年龄/户籍/项目类型）",
+        "所需材料清单（身份证/营业执照/项目计划等）"
+      ],
+      "expected_citations_count": 1,
+      "topic_hint": "startup-support"
+    },
+    {
+      "id": "TC-04",
+      "question": "灵活就业人员可以参加哪些社会保险？需要去哪里办理？",
+      "expected_facts": [
+        "可参加的险种（养老/医疗/失业等具体几个）",
+        "办理窗口或网站（具体地址或 URL）",
+        "缴费基数或比例"
+      ],
+      "expected_citations_count": 1,
+      "topic_hint": "flexible-employment"
+    },
+    {
+      "id": "TC-05",
+      "question": "黄浦区社保经办大厅的地址、电话和办公时间分别是什么？",
+      "expected_facts": [
+        "具体地址（含街道门牌号）",
+        "联系电话（座机）",
+        "办公时间（周X 至 周X，几点到几点）"
+      ],
+      "expected_citations_count": 1,
+      "topic_hint": "service-window"
+    }
+  ]
+}

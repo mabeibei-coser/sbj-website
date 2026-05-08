@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "name": "policy-kb-poc",
+  "domain": "上海黄浦区社保局 就业创业政策库（W0 PoC 试跑）",
+  "sources": [
+    { "path": "./sources/", "exclude": [] }
+  ],
+  "output": "./wiki/",
+  "mode": "knowledge",
+  "link_style": "markdown",
+  "article_sections": [
+    {
+      "name": "概述",
+      "description": "本主题在政策口径下是什么，针对哪类人群，覆盖哪些办理事项",
+      "required": true
+    },
+    {
+      "name": "适用对象与资格条件",
+      "description": "原文措辞列出资格条件、人群范围、限制说明（金额/年限/户籍等）"
+    },
+    {
+      "name": "办理流程与材料",
+      "description": "申请步骤、所需材料、办理窗口/网址、办理时限"
+    },
+    {
+      "name": "补贴标准与发放",
+      "description": "补贴/补助金额、发放方式、发放节奏（如适用）"
+    },
+    {
+      "name": "常见疑问",
+      "description": "原文中明确解答过的市民常见疑问；不要 LLM 编造"
+    },
+    {
+      "name": "出处",
+      "description": "本主题所有内容必须列出原始 markdown 文件 + 行号区间，禁止编造引用",
+      "required": true
+    }
+  ],
+  "topic_hints": [
+    "失业保险",
+    "就业补贴",
+    "创业扶持",
+    "技能培训",
+    "灵活就业"
+  ],
+  "deepseek": {
+    "model": "deepseek-chat",
+    "temperature": 0.1,
+    "max_completion_tokens": 4000
+  }
+}
