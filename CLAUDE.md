@@ -68,13 +68,39 @@
 - E2E（Playwright）覆盖三大模块完整流程
 - 单元测试覆盖：量表评分边界、加密/解密、状态机计数器
 
-## Design System
+## Design System — 写任何 UI 代码前必读
 
-Always read `DESIGN.md` before making any visual or UI decisions.
-All font choices, colors, spacing, and aesthetic direction are defined there.
-Do not deviate without explicit user approval.
-In QA mode, flag any code that doesn't match `DESIGN.md`.
-演示参考：`.planning/design-demo.html`。
+**Source of truth**：`DESIGN.md` v2.0（蓝白 cinematic，抽取自 career-report）。
+
+### 写 UI 前的 5 步 checklist
+
+1. ✅ **读 `DESIGN.md`**（本项目根目录）—— 确认 token、字体、组件、动画
+2. ✅ **读 `D:\career-report\app\globals.css`** —— 完整 CSS 系统（aurora / glass-card / spotlight / report-* 等 25+ class 已就绪）
+3. ✅ **检查页面类型** → DESIGN.md §8 Page Templates 对应的 fork 策略
+4. ✅ **优先 fork career-report 已有页面**（80% 复用 + 20% 改 prompt/字段），不要从零写
+5. ✅ **自检 DESIGN.md §9 Hard Don'ts**（emoji icon / 紫渐变 / pill / Inter / 居中 hero / AI 文案）
+
+### 视觉血统
+
+sbj-website ≈ career-report **fork 改 prompt + 业务字段**。颜色、字体、动画、组件全部沿用。任何"重新设计"动作都需要明确审批。
+
+### 偏离 DESIGN.md 的处理
+
+- **绝不允许**：引入新字体、新基础色、新动画 class
+- **可以**：在 §7 Component Library 加新组件（仅当 sbj-website 业务必需，且用现有 token 组合）
+- **必须**：新组件命名延续 career-report 习惯（`report-*` / `glass-*` / `frag-*`）
+
+### 参考代码定位
+
+| 你要做 | 看 career-report 哪个文件 |
+|---|---|
+| 市民端首页 hero / process / stats / features | `app/page.tsx` |
+| 报告页结构 | `app/report/page.tsx` |
+| 报告章节 wrapper | `components/report/section-wrapper.tsx` |
+| 报告各章节示例 | `components/report/overview-section.tsx` 等 |
+| AI 访谈流程 | `app/api/interview/*` + `app/interview/page.tsx` |
+| Admin 后台 | `app/admin/*` + `lib/admin-session.ts` |
+| 全部 CSS 系统 | `app/globals.css`（这是设计语言的源代码） |
 
 ---
 
