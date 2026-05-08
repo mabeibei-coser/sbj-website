@@ -80,4 +80,8 @@ experiments/**/sources-raw/*.PDF
 experiments/**/reports/compile-log-*.json
 
 # 业务资料原件（含甲方 PDF 等大文件，不进版本库）
-knowledge/
+knowledge/*
+# 例外：政策素材 markdown 目录入版本库（PoC 拷贝过来的 canonical sources + 占位）
+!knowledge/policy-sources/
+knowledge/policy-sources/wechat-archives/*
+!knowledge/policy-sources/wechat-archives/.gitkeep
