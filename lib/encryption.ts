@@ -23,7 +23,7 @@
  */
 
 import "server-only";
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
 
 const VERSION = "v1";
 const ALGO = "aes-256-gcm";
@@ -106,17 +106,20 @@ export function decryptField(encrypted: string): string {
 }
 
 /**
- * 计算字段 hash (SHA256)。用于 phone_hash 这种"可索引、可搜索、不可逆"的列。
+ * 计算字段 keyed hash (HMAC-SHA256)。用于 phone_hash 这种"可索引、可搜索、不可逆"的列。
  *
- * 注意: SHA256 暴力破解 11 位手机号空间只是 10^11 ≈ 37 bit，理论上可枚举。
- * 这里仅用于服务端唯一性约束 + 工作人员搜索，不作为身份验证依据。
- * 真正的认证走 phone_encrypted (AES) + 业务侧短信验证码。
+ * 使用 HMAC-SHA256 (keyed on FIELD_ENCRYPTION_KEY) 而非裸 SHA256：
+ * - 裸 SHA256: 11 位手机号空间 10^11 ≈ 37 bit，拿到 DB 只读权限即可枚举全表手机号。
+ * - HMAC-SHA256: 攻击者需要同时拿到密钥才能枚举，安全性与加密字段同级。
+ *
+ * ⚠️ 迁移注意: 改 hash 算法后现有 phone_hash 值全部失效，需要一次性重新计算。
+ *   Phase 1 无生产数据，直接 reset migrate 即可。
  */
 export function hashField(value: string): string {
   if (typeof value !== "string") {
     throw new TypeError("hashField 仅接受 string 输入");
   }
-  return createHash("sha256").update(value, "utf8").digest("base64");
+  return createHmac("sha256", getKey()).update(value, "utf8").digest("base64");
 }
 
 /**

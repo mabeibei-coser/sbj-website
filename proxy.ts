@@ -27,15 +27,15 @@ const SESSION_COOKIE_NAME = "sbj_admin_session";
 /**
  * Build session options at runtime. middleware 不能在模块顶部读 process.env (Edge 限制)。
  */
-function buildOptions(): SessionOptions {
+/**
+ * 当 ADMIN_SESSION_PASSWORD 缺失或太短时，不给 iron-session 解析机会。
+ * 直接让调用方返回 503 / redirect。
+ * 返回 null 表示配置有误。
+ */
+function buildOptions(): SessionOptions | null {
   const password = process.env.ADMIN_SESSION_PASSWORD;
   if (!password || password.length < 32) {
-    // 配置错: 让所有受保护路径都拒绝。不抛异常 (middleware throw 会 500 整站)
-    // 监控应该已经在启动时通过 /api/admin/login 第一次调用捕获到
-    return {
-      password: "missing-or-short-do-not-use-in-production-32chars".padEnd(32, "x"),
-      cookieName: SESSION_COOKIE_NAME,
-    };
+    return null;
   }
   return {
     password,
@@ -80,8 +80,19 @@ export async function proxy(req: NextRequest) {
   const isApi = isProtectedApiPath(pathname);
   if (!isPage && !isApi) return NextResponse.next();
 
+  const opts = buildOptions();
+  if (!opts) {
+    // ADMIN_SESSION_PASSWORD 未配置: 强制拒绝，不给 iron-session 解析机会
+    if (isPage) {
+      const loginUrl = new URL(ADMIN_LOGIN_PATH, req.url);
+      loginUrl.searchParams.set("error", "server_misconfigured");
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.json({ error: "服务端配置错误: ADMIN_SESSION_PASSWORD 未设置" }, { status: 503 });
+  }
+
   const res = NextResponse.next();
-  const session = await getIronSession<AdminSession>(req, res, buildOptions());
+  const session = await getIronSession<AdminSession>(req, res, opts);
 
   if (!session.isAdmin) {
     if (isPage) {
