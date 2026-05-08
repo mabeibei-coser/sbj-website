@@ -151,12 +151,12 @@ export async function getWikiPageBySlug(kbType, slug): Promise<WikiPageRow|null>
 
 POST /api/qa/answer 请求 / 响应:
 ```typescript
-// Request
-{ question: string (2-500 char), kbType: "policy"|"biz", phone?: "11位数字", consentId?: string }
+// Request（autoplan F2 修正：移除 consentId，统一用 phone → phone_hash 查 ConsentRecord）
+{ question: string (2-500 char), kbType: "policy"|"biz", phone?: "11位数字" }
 
 // Response (200)
 { status: "hit"|"partial"|"miss", answer: string, citations: string[] }
-// Response (403) - consent 未授权
+// Response (403) - consent 未授权（提供了 phone 但未 granted）
 { status: "miss", error: "请先同意服务条款", answer: "", citations: [] }
 // Response (400) - 参数错误
 { error: <message> }

@@ -23,7 +23,7 @@ autonomous: true
 requirements: [QA-04, QA-05, QA-06, QA-07]
 must_haves:
   truths:
-    - "POST /api/qa/answer 接受 {question, kbType, phone?, consentId?}，返回 {status: hit|partial|miss, answer, citations} 三档固定 schema"
+    - "POST /api/qa/answer 接受 {question, kbType, phone?}，返回 {status: hit|partial|miss, answer, citations} 三档固定 schema（autoplan F2 修正：移除 consentId?）"
     - "命中知识库时（hit）answer 末尾固定挂 QA_DISCLAIMER 文案 + 至少 1 条引用 + ≤1000 字"
     - "未命中（miss）和未授权（403）时，answer 走 FALLBACK_PHRASE_MISS 常量，不调 LLM"
     - "用户输入含 'ignore previous instructions' 类 jailbreak 词时直接走 miss 分支，不调 LLM（D-13 Step 1）"
@@ -122,7 +122,6 @@ Output:
 @lib/llm-client.ts
 @lib/audit.ts
 @lib/encryption.ts
-@lib/citizens.ts
 @lib/db.ts
 @prisma/schema.prisma
 @app/api/citizen/consent/route.ts
@@ -182,24 +181,87 @@ model AuditLog { ... }
 model LlmCallLog { ... }  // callLlm 自动写
 ```
 
-`prisma.$queryRaw` 模板（用于 retrieve.ts 的全文检索）：
+`prisma.$queryRaw` 模板（用于 retrieve.ts 的 **pg_trgm 字符三元组**检索）：
+
+> **[autoplan B1 修正]** `simple` 配置对中文文本不按词分割，整段句子成为单 token，中文查询召回率近乎 0。
+> 改用 `pg_trgm` 字符三元组，`word_similarity()` 对短语匹配效果显著更好，且无需中文分词扩展。
+> **前置条件**：executor 必须先跑 Task 0 migration（`CREATE EXTENSION pg_trgm` + GIN 索引）。
+
 ```typescript
 const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: string; content: string; source_url: string | null; score: number }>>`
-  SELECT id, slug, title, content, "sourceUrl" as source_url,
-         ts_rank(to_tsvector('simple', title || ' ' || content), plainto_tsquery('simple', ${question})) AS score
-  FROM "WikiPage"
-  WHERE "kbType" = ${kbType}
-    AND to_tsvector('simple', title || ' ' || content) @@ plainto_tsquery('simple', ${question})
+  SELECT id, slug, title, content, source_url,
+         word_similarity(${question}, title || ' ' || content) AS score
+  FROM wiki_pages
+  WHERE kb_type = ${kbType}
+    AND word_similarity(${question}, title || ' ' || content) > 0.05
   ORDER BY score DESC
   LIMIT ${k}
 `;
 ```
-（`simple` 配置不依赖中文分词扩展，能跑；后续如装 `zhparser` 再升级。CONTEXT.md `<specifics>` 给的备选：失败时降级 `pg_trgm` similarity 或 LIKE，由 executor 决定优先顺序。）
+（`pg_trgm` 是 PostgreSQL 标准扩展，Lighthouse 本地 PG 14 自带，无需额外安装。SQL 内用 0.05 做初筛，`QA_CONFIG.RETRIEVAL_THRESHOLD = 0.1` 在 caller 处决定 hit/miss 分级。降级路径保留 ILIKE。）
 
 </interfaces>
 </context>
 
 <tasks>
+
+<task type="auto">
+  <name>Task 0: pg_trgm migration — CREATE EXTENSION + GIN 索引（autoplan B1，必须先于 Task 2 执行）</name>
+  <files>
+    prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql (new)
+  </files>
+  <read_first>
+    - prisma/migrations/20260509000000_init/migration.sql (确认已有 wiki_pages 表)
+    - prisma/schema.prisma (WikiPage 模型，确认 @@map("wiki_pages") 和 content 字段)
+  </read_first>
+  <action>
+    **Step 0.1 — 创建 migration SQL 文件**：
+
+    路径：`prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql`
+
+    内容：
+    ```sql
+    -- autoplan B1: pg_trgm 字符三元组扩展 + wiki_pages 内容 GIN 索引
+    -- 用于 lib/qa/retrieve.ts 的 word_similarity 中文检索
+    -- pg_trgm 是 PostgreSQL 标准扩展，无需额外安装包
+
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+    -- GIN 索引覆盖 title + content（合并列与 retrieve.ts 的 SQL 一致）
+    CREATE INDEX IF NOT EXISTS wiki_pages_content_trgm
+      ON wiki_pages
+      USING GIN ((title || ' ' || content) gin_trgm_ops);
+    ```
+
+    **Step 0.2 — 在服务器上执行**（executor 用 `psql` 直接跑，不走 `prisma migrate deploy`，因为这是自定义 SQL）：
+    ```bash
+    psql $DATABASE_URL -f prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql
+    ```
+
+    **Step 0.3 — 本地开发环境同步**（如用 Docker PG）：
+    ```bash
+    docker exec -i <pg_container> psql -U <user> <db> \
+      -f /path/to/prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql
+    ```
+    或者在 Docker 容器里直接执行 SQL。
+
+    **注意**：`prisma migrate resolve --applied 20260509010000_pg_trgm_wiki` 不需要跑，因为这个 migration 不改 Prisma schema（没有新 model / 字段），Prisma 不追踪纯 DDL 扩展的 migration。直接用 psql 执行即可。
+  </action>
+  <acceptance_criteria>
+    - 文件存在：`prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql` 含 `CREATE EXTENSION IF NOT EXISTS pg_trgm` 和 `CREATE INDEX IF NOT EXISTS wiki_pages_content_trgm`。
+    - 执行后：`psql $DATABASE_URL -c "SELECT extname FROM pg_extension WHERE extname='pg_trgm'"` 返回 1 行。
+    - 执行后：`psql $DATABASE_URL -c "SELECT indexname FROM pg_indexes WHERE indexname='wiki_pages_content_trgm'"` 返回 1 行。
+    - `word_similarity('失业保险', 'content text here')` 在 psql 中不报错（验证扩展生效）。
+  </acceptance_criteria>
+  <verify>
+    <automated>test -f prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql && grep -q "pg_trgm" prisma/migrations/20260509010000_pg_trgm_wiki/migration.sql</automated>
+  </verify>
+  <done>
+    - pg_trgm 扩展在目标 DB 已启用
+    - wiki_pages GIN 索引已建立
+    - Task 2 的 retrieve.ts 可以直接使用 word_similarity()
+  </done>
+</task>
 
 <task type="auto" tdd="true">
   <name>Task 1: 建立三层防护的纯函数层（config / disclaimer / citations / sanitizer）+ 单元测试（TDD: RED → GREEN → REFACTOR）</name>
@@ -385,7 +447,7 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
      */
 
     export const QA_CONFIG = {
-      RETRIEVAL_THRESHOLD: 0.3,       // D-09: ts_rank 分数低于此值进 miss
+      RETRIEVAL_THRESHOLD: 0.1,       // D-09: pg_trgm word_similarity 低于此值进 miss（autoplan B1: 0.3→0.1）
       MAX_ANSWER_CHARS: 1000,         // D-10: 中文字符上限
       RETRY_LINK_WHITELIST_TIMES: 1,  // D-12: 引用白名单失败重试次数
       TOP_K: 3,                       // D-08: 检索返回 top-3
@@ -523,7 +585,7 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
     - **RED gate passed**：在 lib/qa/citations.ts 和 lib/qa/sanitizer.ts 写 GREEN 实现**之前**，`npx vitest run tests/qa/citations.test.ts tests/qa/sanitizer.test.ts` 报 FAIL 或 module not found（证据：执行日志含 `FAIL` 或 `Cannot find module`）。
     - **GREEN gate passed**：写完最小实现后，`npx vitest run tests/qa/citations.test.ts tests/qa/sanitizer.test.ts` exit 0，所有 it 通过。
     - **REFACTOR gate passed**：清理后，`npx vitest run tests/qa/citations.test.ts tests/qa/sanitizer.test.ts` 仍 exit 0；如有 lint，不新增 lint error。
-    - 文件存在：`lib/qa/config.ts` 含 `export const QA_CONFIG` + `RETRIEVAL_THRESHOLD: 0.3` + `MAX_ANSWER_CHARS: 1000` + `FALLBACK_PHRASE_MISS` 含字符串 "63011095"。
+    - 文件存在：`lib/qa/config.ts` 含 `export const QA_CONFIG` + `RETRIEVAL_THRESHOLD: 0.1` + `MAX_ANSWER_CHARS: 1000` + `FALLBACK_PHRASE_MISS` 含字符串 "63011095"。（autoplan B1 修正：0.3→0.1，匹配 pg_trgm 量级）
     - `lib/qa/disclaimer.ts` 含 `export const QA_DISCLAIMER` 且字符串含 "63011095"。
     - `lib/qa/citations.ts` 导出 `isAllowedCitation` 和 `filterCitations`；`grep -c "gov\\.cn" lib/qa/citations.ts` ≥1。
     - `lib/qa/sanitizer.ts` 导出 `detectPromptInjection` / `wrapQuestionXml` / `truncateAnswerToLimit`；INJECTION_PATTERNS 含 `忽略.{0,4}(上述|前面|之前|以上).{0,4}指令` 和 `ignore\\s+...previous\\s+...instructions?` 至少 2 条核心 jailbreak pattern。
@@ -550,7 +612,7 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
     tests/qa/retrieve.test.ts (new)
   </files>
   <read_first>
-    - lib/citizens.ts (整文件 — service 层 + Prisma 查询风格)
+    - app/api/citizen/consent/route.ts (整文件 — consent lookup + Prisma 查询风格参考；autoplan F3 修正：lib/citizens.ts 不存在)
     - lib/db.ts (Prisma client)
     - prisma/schema.prisma (WikiPage / WikiPageVersion 字段)
     - tests/audit.test.ts (整文件 — Vitest 内联 mock 工厂模板)
@@ -665,11 +727,12 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
     }
 
     /**
-     * Postgres 全文检索 + ts_rank 打分。
-     * 用 'simple' 配置（不依赖中文分词扩展，先跑通；后续如装 zhparser 再升）。
+     * pg_trgm 字符三元组相似度检索（autoplan B1 修正：替换 tsvector 'simple' 配置）。
+     * word_similarity 对中文短语效果显著优于 simple tsvector（无需中文分词扩展）。
+     * 前置条件：Task 0 migration 已运行（CREATE EXTENSION pg_trgm + GIN index wiki_pages_content_trgm）。
      * 阈值过滤由 caller (lib/qa/answer.ts) 决定 hit/partial/miss 档位。
      *
-     * D-08: top-K=3 默认；D-09: 阈值 0.3 在 caller 处比较，本函数不做过滤
+     * D-08: top-K=3 默认；D-09: 阈值 0.1（pg_trgm 量级），SQL 内用 0.05 做初筛
      */
     export async function retrieveTopK(
       question: string,
@@ -687,14 +750,11 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
           source_url: string | null;
           score: number;
         }>>`
-          SELECT id, slug, title, content, "sourceUrl" as source_url,
-                 ts_rank(
-                   to_tsvector('simple', title || ' ' || content),
-                   plainto_tsquery('simple', ${question})
-                 ) AS score
-          FROM "WikiPage"
-          WHERE "kbType" = ${kbType}
-            AND to_tsvector('simple', title || ' ' || content) @@ plainto_tsquery('simple', ${question})
+          SELECT id, slug, title, content, source_url,
+                 word_similarity(${question}, title || ' ' || content) AS score
+          FROM wiki_pages
+          WHERE kb_type = ${kbType}
+            AND word_similarity(${question}, title || ' ' || content) > 0.05
           ORDER BY score DESC
           LIMIT ${k}
         `;
@@ -710,7 +770,7 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
           score: typeof r.score === "number" ? r.score : Number(r.score),
         }));
       } catch (err) {
-        console.warn("[qa.retrieve] tsvector 失败，降级到 ILIKE:", err);
+        console.warn("[qa.retrieve] pg_trgm 查询失败（Task 0 migration 是否已执行？），降级到 ILIKE:", err);
         const likeRows = await prisma.wikiPage.findMany({
           where: {
             kbType,
@@ -830,18 +890,18 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
     - **RED gate passed**：retrieve.ts 实现写出**之前**，`npx vitest run tests/qa/retrieve.test.ts` 报 FAIL 或 module not found。
     - **GREEN gate passed**：写完最小实现后 `npx vitest run tests/qa/retrieve.test.ts` exit 0，全部 5+ it 通过。
     - **REFACTOR gate passed**：清理后仍 exit 0；typecheck 仍过。
-    - 文件存在：`lib/qa/retrieve.ts` 包含 `import "server-only"` + `retrieveTopK` + `prisma.$queryRaw` + ILIKE 降级路径。
+    - 文件存在：`lib/qa/retrieve.ts` 包含 `import "server-only"` + `retrieveTopK` + `word_similarity` + ILIKE 降级路径。（autoplan B1 修正：已替换 tsvector 方案）
     - 文件存在：`lib/qa/wiki.ts` 包含 `listWikiPages` / `getWikiPage` / `getWikiPageBySlug` 和 `updateWikiContent` stub（throw not implemented）。
     - `grep -q "server-only" lib/qa/retrieve.ts` 和 `lib/qa/wiki.ts`。
     - `npm run typecheck` 退 0。
     - `npx vitest run tests/qa/retrieve.test.ts` 退 0，至少 5 个 it 全过。
   </acceptance_criteria>
   <verify>
-    <automated>npm run typecheck && npx vitest run tests/qa/retrieve.test.ts && grep -q "server-only" lib/qa/retrieve.ts && grep -q "server-only" lib/qa/wiki.ts</automated>
+    <automated>npm run typecheck && npx vitest run tests/qa/retrieve.test.ts && grep -q "server-only" lib/qa/retrieve.ts && grep -q "word_similarity" lib/qa/retrieve.ts && grep -q "server-only" lib/qa/wiki.ts</automated>
   </verify>
   <done>
     - RED → GREEN → REFACTOR 三阶段 gate 全部通过
-    - retrieve.ts 走 ts_rank 主路径 + ILIKE 降级路径
+    - retrieve.ts 走 pg_trgm word_similarity 主路径 + ILIKE 降级路径（autoplan B1 修正）
     - wiki.ts 三个 read service + updateWikiContent stub
     - 5 个 retrieve 单元测试全过
   </done>
@@ -1383,7 +1443,7 @@ const rows = await prisma.$queryRaw<Array<{ id: string; slug: string; title: str
       question: z.string().min(2, "问题至少 2 个字符").max(500, "问题最多 500 字符"),
       kbType: z.enum(["policy", "biz"]),
       phone: z.string().regex(/^\d{11}$/, "手机号格式错误").optional(),
-      consentId: z.string().optional(),
+      // autoplan F2: 移除 consentId 字段，统一用 phone → HMAC → citizenPhoneHash 查 ConsentRecord
     });
 
     async function checkQaConsent(phoneHash: string): Promise<boolean> {
@@ -1539,7 +1599,7 @@ After completion, create `.planning/phases/02-policy-qa/02-02-SUMMARY.md` record
 - 三层防护各自实现摘要 + 关键 regex / 阈值 / 函数签名
 - callLlm caller 字段使用清单（qa.answer 第一次 + qa.answer.retry 显式重试，运营遥测可分别检索）
 - 测试用例数 + 通过率 + RED/GREEN/REFACTOR gate 留痕
-- 已知限制：tsvector 用 'simple' 配置（中文召回率有限）— 部署后视召回情况决定是否升级 zhparser
+- 检索方案：已改用 pg_trgm word_similarity（autoplan B1 修正）；GIN 索引由 Task 0 migration 建立；30 篇量级性能无忧；后续如需更细粒度分词可加 zhparser 升级
 - 等 Plan 02-04 (UI) + 02-06 (eval) + 02-07 (e2e) 接入后才能完整闭环验收 success criterion #3
 </output>
 </content>
