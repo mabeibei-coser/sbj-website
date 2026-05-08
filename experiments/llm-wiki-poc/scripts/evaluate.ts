@@ -122,7 +122,12 @@ function sampleD1(topics: TopicArticle[], n: number): Array<{ topic: string; tex
 
   const candidates: Array<{ topic: string; text: string; line: number }> = [];
   for (const t of topics) {
-    for (let i = 0; i < t.lines.length; i++) {
+    // 找到 ## 出处 / ## Sources 段落的起点，之后的行不参与抽样（那些是引用清单，不是事实陈述）
+    const cutoffIdx = t.lines.findIndex((ln) =>
+      /^##\s+(出处|Sources|引用)\s*$/i.test(ln.trim())
+    );
+    const upper = cutoffIdx >= 0 ? cutoffIdx : t.lines.length;
+    for (let i = 0; i < upper; i++) {
       const ln = t.lines[i];
       if (!ln) continue;
       const trimmed = ln.trim();
