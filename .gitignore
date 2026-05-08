@@ -56,3 +56,6 @@ e2e/fixtures/.tmp-*
 
 # Vitest
 .vitest-cache/
+
+# LLM eval 报告 (本地跑生成的 JSON 不入库)
+tests/llm-eval/results/
