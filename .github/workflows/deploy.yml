@@ -1,0 +1,60 @@
+# 部署到腾讯云 Lighthouse (INF-11)
+# 触发: push 到 main + CI 全绿
+# 走 SSH 到 Lighthouse 服务器, git pull + npm ci + prisma migrate + build + pm2 restart
+#
+# 配置前置条件 (Phase 0 W0 任务):
+# 1. GitHub repo Settings → Secrets and variables → Actions, 添加:
+#    - TENCENT_HOST: Lighthouse IP 或域名
+#    - TENCENT_USER: SSH 用户名 (一般 ubuntu / root)
+#    - TENCENT_SSH_KEY: SSH 私钥 (用 `ssh-keygen` 生成的整段文本)
+#    - TENCENT_PORT: SSH 端口 (默认 22)
+#    - TENCENT_DEPLOY_PATH: 服务器上代码路径, e.g. /home/ubuntu/sbj-website
+# 2. 服务器上手动 clone repo 到 TENCENT_DEPLOY_PATH, 配 .env.production.local
+# 3. 装 PM2: `npm i -g pm2`, 第一次 `pm2 start ecosystem.config.js`
+#
+# ICP 备案下来前可以让此 workflow 跑通但不实际外网访问
+
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: # 手动触发
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # 配 GitHub environment 加审批，避免误推 (Phase 1 暂未启用，留 Phase 7/8 上线前打开)
+    # environment: production
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.TENCENT_HOST }}
+          username: ${{ secrets.TENCENT_USER }}
+          key: ${{ secrets.TENCENT_SSH_KEY }}
+          port: ${{ secrets.TENCENT_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.TENCENT_DEPLOY_PATH }}
+
+            echo "==> git pull"
+            git pull --ff-only
+
+            echo "==> npm ci"
+            npm ci --no-audit --no-fund
+
+            echo "==> prisma generate + migrate deploy"
+            npx prisma generate
+            npx prisma migrate deploy
+
+            echo "==> next build"
+            npm run build
+
+            echo "==> pm2 restart"
+            pm2 restart sbj-website || pm2 start ecosystem.config.js
+
+            echo "==> done"

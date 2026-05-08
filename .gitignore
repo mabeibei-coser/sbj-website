@@ -1,22 +1,77 @@
-# Node
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
 node_modules/
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
 .next/
 out/
+
+# production
+/build
 dist/
 
-# 环境变量（含 API key）
+# misc
+.DS_Store
+Thumbs.db
+*.pem
+
+# debug
+npm-debug.log*
+*.log
+
+# env files
 .env
 .env.local
+.env*.local
 .env.*.local
 **/.env.local
 
-# 编译/缓存
-*.tsbuildinfo
-*.log
+# vercel
+.vercel
 
-# OS
-.DS_Store
-Thumbs.db
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code worktree 元数据（每台机器独立）
+.claude/worktrees/
+.claude/settings.local.json
+
+# secrets / 密钥防护（按 career-report 经验保留）
+*.key
+id_rsa*
+id_ed25519*
+tencent_key*
+.ssh/
+**/.ssh/
+# Windows 路径在 Git Bash 里被错误解析时留下的残片
+C\:*
+
+# Prisma 本地开发产物
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# Playwright
+playwright-report/
+test-results/
+e2e/fixtures/.tmp-*
+
+# Vitest
+.vitest-cache/
+
+# LLM eval 报告 (本地跑生成的 JSON 不入库)
+tests/llm-eval/results/
 
 # 实验产物（PoC，不进版本库）
 experiments/**/wiki/
@@ -25,13 +80,5 @@ experiments/**/sources-raw/*.pdf
 experiments/**/sources-raw/*.PDF
 experiments/**/reports/compile-log-*.json
 
-# Claude Code worktree 元数据（每台机器独立）
-.claude/worktrees/
-.claude/settings.local.json
-
 # 业务资料原件（含甲方 PDF 等大文件，不进版本库）
 knowledge/
-
-# IDE
-.vscode/
-.idea/

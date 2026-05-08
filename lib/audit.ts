@@ -1,0 +1,147 @@
+/**
+ * 审计写入 helper (INF-05)
+ *
+ * 三类审计:
+ * - logAudit: 通用审计 (admin 写操作 / tier 变更 / 系统事件)
+ * - logLlmCall: LLM 调用 (含失败/降级)，T4 lib/llm-client.ts 自动调用
+ * - logConsent: PIPL 同意记录，T8 consent API 调用
+ *
+ * 设计:
+ * - 写入失败不阻塞主流程，只在 console.warn (审计是"记得最好，写不了不能拖死业务")
+ * - 自动从 NextRequest 抽 ip + user-agent，不要每个 caller 自己拼
+ * - 不导出 Prisma 类型，调用方传 plain object，模块内部转换
+ *
+ * 不在本模块的事:
+ * - 业务流程的 transactional 一致性 (审计写失败 vs 业务写成功 → 当前接受日志缺漏)
+ * - 审计查询 / dashboard (走 app/admin/dashboard/* 直接 prisma)
+ */
+
+import "server-only";
+import type { NextRequest } from "next/server";
+import { prisma } from "@/lib/db";
+import { hashPrompt } from "@/lib/hash";
+
+// 重新导出，保持原 import 路径不破坏 (lib/llm-client.ts 仍 from "@/lib/audit")
+export { hashPrompt };
+
+// ---------- 共享: 从 NextRequest 抽请求元数据 ----------
+
+export interface RequestMeta {
+  ip: string | null;
+  userAgent: string | null;
+}
+
+/**
+ * 从 Next.js NextRequest 抽 ip + user-agent。
+ * 优先 X-Forwarded-For (CLB 反向代理)，回退 X-Real-IP。
+ * Next.js 16 已移除 NextRequest.ip，本地 dev 无 IP 头时返回 null (生产 CLB 后必有 XFF)。
+ */
+export function extractRequestMeta(req: Pick<NextRequest, "headers">): RequestMeta {
+  const headers = req.headers;
+  const xff = headers.get("x-forwarded-for");
+  const ip = xff?.split(",")[0]?.trim() ?? headers.get("x-real-ip") ?? null;
+  const userAgent = headers.get("user-agent") ?? null;
+  return { ip, userAgent };
+}
+
+// ---------- logAudit: 通用审计 ----------
+
+export interface LogAuditInput {
+  actor: string;
+  action: string;
+  targetType?: string;
+  targetId?: string;
+  before?: unknown;
+  after?: unknown;
+  request?: Pick<NextRequest, "headers">;
+  meta?: Partial<RequestMeta>;
+}
+
+export async function logAudit(input: LogAuditInput): Promise<void> {
+  const meta = input.meta ?? (input.request ? extractRequestMeta(input.request) : {});
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actor: input.actor,
+        action: input.action,
+        targetType: input.targetType ?? null,
+        targetId: input.targetId ?? null,
+        before: input.before === undefined ? undefined : (input.before as never),
+        after: input.after === undefined ? undefined : (input.after as never),
+        ip: meta.ip ?? null,
+        userAgent: meta.userAgent ?? null,
+      },
+    });
+  } catch (err) {
+    console.warn("[audit] logAudit failed:", err);
+  }
+}
+
+// ---------- logLlmCall: LLM 调用审计 ----------
+
+export interface LogLlmCallInput {
+  vendor: "deepseek" | "doubao" | "iflytek";
+  model: string;
+  caller: string;
+  promptHash: string;
+  tokensIn?: number;
+  tokensOut?: number;
+  latencyMs?: number;
+  status: "success" | "failed" | "timeout";
+  errorMessage?: string;
+  costCents?: number;
+  isFallback?: boolean;
+}
+
+export async function logLlmCall(input: LogLlmCallInput): Promise<void> {
+  try {
+    await prisma.llmCallLog.create({
+      data: {
+        vendor: input.vendor,
+        model: input.model,
+        caller: input.caller,
+        promptHash: input.promptHash,
+        tokensIn: input.tokensIn ?? 0,
+        tokensOut: input.tokensOut ?? 0,
+        latencyMs: input.latencyMs ?? 0,
+        status: input.status,
+        errorMessage: input.errorMessage ?? null,
+        costCents: input.costCents ?? 0,
+        isFallback: input.isFallback ?? false,
+      },
+    });
+  } catch (err) {
+    console.warn("[audit] logLlmCall failed:", err);
+  }
+}
+
+// ---------- logConsent: PIPL 同意 ----------
+
+export interface LogConsentInput {
+  citizenId?: string;
+  citizenPhoneHash?: string;
+  consentType: "qa" | "career" | "biz" | "cookie" | "privacy_policy";
+  granted: boolean;
+  version: string;
+  request?: Pick<NextRequest, "headers">;
+  meta?: Partial<RequestMeta>;
+}
+
+export async function logConsent(input: LogConsentInput): Promise<void> {
+  const meta = input.meta ?? (input.request ? extractRequestMeta(input.request) : {});
+  try {
+    await prisma.consentRecord.create({
+      data: {
+        citizenId: input.citizenId ?? null,
+        citizenPhoneHash: input.citizenPhoneHash ?? null,
+        consentType: input.consentType,
+        granted: input.granted,
+        version: input.version,
+        ip: meta.ip ?? null,
+        userAgent: meta.userAgent ?? null,
+      },
+    });
+  } catch (err) {
+    console.warn("[audit] logConsent failed:", err);
+  }
+}
