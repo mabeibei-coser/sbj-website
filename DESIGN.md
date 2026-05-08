@@ -1,234 +1,649 @@
 # Design System — sbj-website
 
-> Memorable thing: **"在政府门口，但比政府温暖"**
-> 创建：2026-05-08 · 来源：/design-consultation
-> 演示：[`.planning/design-demo.html`](.planning/design-demo.html)
+> **Version 2.0** · 蓝白 cinematic（抽取自 career-report）
+> **Replaces**: v1.0 (暖橘陶 editorial · 已废弃)
+> **Updated**: 2026-05-08
+> **Reference source**: `D:\career-report\app\globals.css` + `app/page.tsx` + `components/report/*`
 
 ---
 
-## Product Context
+## 0. Why this exists
 
-- **What this is**：上海黄浦区社保局智能就业创业 Web 应用
-- **Who it's for**：双端
-  - 市民端（自助）：失业/求职市民、创业意向者，**带焦虑**
-  - 工作人员端（CRM）：黄浦区社保局工作人员
-- **Space**：政府服务 + AI 辅助 + 民生
-- **Project type**：纯 Web，单 Next.js 应用承载市民端 + 工作人员后台
-- **Reference sites**：UK.gov（极简专业政府设计）、人民日报数字版（中文宋体档案感）、Linear（数据后台克制）
+sbj-website 后续所有页面（市民端首页、政策问答、诊断流程、报告查看、工作人员后台、admin）必须遵守这份规范，**保持视觉统一**。
 
-## Aesthetic Direction
+**Memorable thing**：cinematic 蓝白 · 既严肃又有温度——政府接受、市民不焦虑、副业母版可复制到其他社保局。
 
-- **方向**：Editorial / Magazine（编辑/档案感）
-- **Decoration level**：Intentional——细线分隔 + 章节编号 + 微纸纹背景
-- **Mood**：严肃但有温度。让政府客户看着合规，让失业市民看着不焦虑。
-- **不要**：纯政务蓝表格 / SaaS 圆角紫渐变 / 创业风弹簧动画
+**美学血统**：直接抽取自 `D:\career-report\`。这意味着 sbj-website 视觉约 80% 复用 career-report 已写好的 CSS / 组件 / 动画 / token。开发时**优先 fork career-report 已有代码**，再针对 sbj-website 业务做局部调整。
+
+**Reference sites**（设计灵感同源）：Vercel · Linear · Mercury · Anthropic · Stripe Press。
 
 ---
 
-## Typography
+## 1. Visual Theme
 
-中文优先。**Display 用宋体是这套设计的关键 RISK**——95% 政务/SaaS 都用黑体，宋体能做出"档案/认真"感。
-
-| 用途 | 字体 | Weight | 说明 |
-|---|---|---|---|
-| **Display / Hero** | `Noto Serif SC`（思源宋体 SC） | 600 / 700 | 页面 hero 标题、模块章节标题、报告章节标题 |
-| **Body / UI** | `Noto Sans SC`（思源黑体 SC） | 400 / 500 / 700 | 正文、段落、按钮、表单标签 |
-| **Data / Tables** | `JetBrains Mono` | 400 / 500 | tabular-nums 数字对齐，报告/表格/手机号 |
-
-### Loading
-
-```html
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-```
-
-如果国内 Google Fonts 慢：备选 `https://fonts.font.im/` 或自托管 woff2。
-
-### Scale
-
-| 名称 | size / line-height | weight | 字体 |
-|---|---|---|---|
-| Display Large | 56px / 1.15 | 700 | Serif |
-| Display | 40px / 1.2 | 600 | Serif |
-| H1 | 28px / 1.3 | 500 | Serif |
-| H2 | 20px / 1.4 | 700 | Sans |
-| H3 | 16px / 1.5 | 700 | Sans |
-| Body Large | 18px / 1.7 | 400 | Sans |
-| Body | 16px / 1.7 | 400 | Sans |
-| Body Small | 14px / 1.6 | 400 | Sans |
-| Caption | 12px / 1.5 | 400 | Sans |
-| Mono | 12-14px / 1.5 | 400-500 | Mono, tabular-nums |
-| Label Up | 11px / 1.5 | 500 | Sans, letter-spacing 0.12em, UPPERCASE |
-
-### 黑名单（不用）
-
-- 阿里巴巴 PuHuiTi（创业风太强 + 每个产品都长一样）
-- HarmonyOS Sans（手机品牌联想）
-- system-ui / -apple-system 作为 Display（"我放弃了字体"信号）
-- Inter / Roboto / Space Grotesk 作为中文产品的英文 fallback（默认懒）
-
----
-
-## Color
-
-| Token | Hex | 用途 |
+| 维度 | 决策 | 反对 |
 |---|---|---|
-| `--ink` | `#1A1A1A` | 主文字（暖灰黑，不是纯黑） |
-| `--ink-2` | `#2A2620` | 次级标题 |
-| `--ink-3` | `#4A4036` | 正文颜色 |
-| `--pencil` | `#6B6157` | 次要文字 / 元信息 |
-| `--pencil-light` | `#9A8F82` | 占位文字 / 极弱信息 |
-| `--archive-blue` | `#1E3A5F` | **主交互色**：链接、次级按钮、tab active |
-| `--archive-blue-deep` | `#15293F` | hover / active 加深 |
-| `--archive-blue-soft` | `#E5EAF1` | 轻量背景 |
-| `--terra` | `#D97757` | **Accent**：主 CTA、关键标记、强调（克制使用） |
-| `--terra-deep` | `#B85E40` | hover / active |
-| `--terra-soft` | `#FBEDE5` | 轻量背景（如 hover 卡片） |
-| `--paper-bg` | `#FAF8F4` | 页面底色（不是纯白） |
-| `--paper-card` | `#F5F1EA` | 卡片背景 |
-| `--paper-line` | `#E8E2D5` | 分隔线（默认） |
-| `--paper-line-soft` | `#F0EBDE` | 极弱分隔线（表格行） |
-
-### 语义色（5 级帮扶标签直接复用 + 系统状态）
-
-| Token | Hex | 用途 |
-|---|---|---|
-| `--green` | `#3F7D58` | 易帮扶 / 成功 |
-| `--gold` | `#C18B30` | 较难帮扶 / 警告 |
-| `--terra` | `#D97757` | 难帮扶（与 accent 同色，故意） |
-| `--brick` | `#A14B3C` | 重点帮扶 / 错误 |
-| `--ink-2` | `#2A2620` | 托底帮扶（深沉） |
-| `--steel` | `#5A6B7C` | 信息 |
-
-### 不用
-
-- 纯蓝 `#2E5BBA` 类政务蓝（太冷）
-- SaaS 紫 `#7C3AED`（创业风）
-- 鲜橙 `#FF6B35`（创业风太强 / 不庄重）
-- 纯黑 `#000`（与暖纸底冲突）
-- 纯白 `#FFF` 大面积背景（与暖色系不和）
-
-### Dark mode
-
-**V1 不做**。单兵交付不浪费时间。如要：surfaces 降到 `#1A1410`（暖深褐），accent 降饱和 15%。
+| 整体风格 | Cinematic blue + warm-feeling neutrals | 纯政务蓝表格、暖橘陶 editorial、SaaS 圆角紫渐变 |
+| Hero 形态 | 暗色 navy + aurora 渐变 + grid + 星座背景 + 数据可视化（左右分屏） | 纯白 hero + 三栏 features + 默认 CTA |
+| Decoration | Intentional——多层装饰（aurora / grid / noise / orbs / constellation 粒子） | Minimalist 极简 / 完全 flat |
+| Mood | 严肃而有温度，作品级精致 | 冷漠政府站 / 创业风弹簧 / 朴素 wireframe |
+| 字体 | Geist + Noto Sans SC（Google Fonts 强制挂载，跨 Win/macOS 一致） | system-ui / PingFang SC（macOS 字体 Windows 不存在） |
+| 数据可视 | 真正的 SVG 可视（雷达图、KPI、bar、sparkline） | 截图 / iframe / 第三方图表组件 |
 
 ---
 
-## Spacing
+## 2. Color Palette · OKLCH
+
+所有颜色用 OKLCH 空间定义。直接复制到 `app/globals.css :root {}`。
+
+### 2.1 Surface / Ink
 
 ```css
---s-1: 4px;    --s-2: 8px;    --s-3: 12px;
---s-4: 16px;   --s-5: 24px;   --s-6: 32px;
---s-7: 48px;   --s-8: 64px;   --s-9: 96px;
+--background: oklch(0.985 0.002 240);   /* page bg, cool white */
+--foreground: oklch(0.17 0.02 250);     /* main text */
+--card: oklch(1 0 0);                    /* card白 */
+--muted: oklch(0.96 0.008 240);          /* muted bg */
+--muted-foreground: oklch(0.5 0.02 250); /* secondary text */
+--border: oklch(0.91 0.01 240);          /* hairline */
 ```
 
-- **Base unit**：8px
-- **Density**：
-  - 市民端：comfortable（行高 1.7、padding 大、单栏窄阅读）—— 失业市民焦虑，视觉要松
-  - 工作人员后台：compact（行高 1.5、表格密、列表多列）—— 数据效率优先
-
-## Layout
-
-- **市民端正文区**：`max-width: 720px`，居中，单栏阅读
-- **工作人员后台**：`max-width: 1440px`，左侧 220px 暗色 sidebar + 主区
-- **Border radius 阶梯**：
-  - `--r-sm: 4px`（按钮、tag、输入框、token）—— 默认
-  - `--r-md: 8px`（卡片）—— 谨慎用
-  - `--r-lg: 12px`—— 仅特殊情况
-  - **不用** `border-radius: 9999px` / pill —— 太创业风
-- **不用 box-shadow 炫技** —— 用 `1px solid var(--paper-line)` 划分层次
-
-## Motion
+### 2.2 Blue Scale（核心）
 
 ```css
---easing-out: cubic-bezier(0.16, 1, 0.3, 1);
---t-micro: 100ms;
---t-short: 250ms;
---t-medium: 400ms;
+--navy-950: oklch(0.18 0.04 255);    /* hero 深底 */
+--navy-900: oklch(0.22 0.06 252);    /* navy bg */
+--navy-800: oklch(0.28 0.08 250);    /* heading */
+--navy-700: oklch(0.35 0.12 250);    /* body strong */
+--blue-700: oklch(0.38 0.20 255);    /* link, deep CTA */
+--blue-600: oklch(0.46 0.19 252);    /* hover */
+--blue-500: oklch(0.55 0.18 250);    /* primary KPI、accent */
+--blue-400: oklch(0.65 0.16 245);    /* highlight */
+--blue-300: oklch(0.75 0.12 240);    /* soft highlight */
+--blue-200: oklch(0.85 0.07 238);    /* border-on-tinted */
+--blue-100: oklch(0.93 0.03 238);    /* tinted bg */
+--blue-50: oklch(0.97 0.012 238);    /* lightest tinted */
+--gold-500: oklch(0.72 0.12 75);     /* 极少使用，单点强调 */
 ```
 
-- **报告章节**：fade-in 250ms，stagger 50ms 顺序进入
-- **按钮 hover**：bg / border-color 200ms transition
-- **tab 切换**：opacity + 1px underline 250ms
-- **不要**：弹簧动画、scroll-driven parallax、酷炫旋转
-- **理由**：政府场景 + 焦虑用户，过度动画 = 不稳重 + 加焦虑
+### 2.3 Report Ink（报告页专用）
+
+```css
+--report-ink: oklch(0.17 0.02 250);
+--report-ink-soft: oklch(0.32 0.05 250);
+--report-ink-muted: oklch(0.5 0.02 250);
+--report-border: oklch(0.91 0.01 240);
+--report-divider: oklch(0.93 0.008 240);
+```
+
+### 2.4 Semantic（5 级帮扶 + 状态色）
+
+sbj-website 业务需求：5 级帮扶标签、AI 命中状态、错误警告。
+
+```css
+--positive: oklch(0.55 0.15 155);          /* 易帮扶 / 成功 / 命中知识库 */
+--positive-soft: oklch(0.96 0.04 155);
+--positive-border: oklch(0.85 0.08 155);
+
+--warning: oklch(0.62 0.14 55);            /* 难帮扶 / 警告 / 部分命中 */
+--warning-soft: oklch(0.97 0.06 70);
+--warning-border: oklch(0.85 0.1 70);
+
+--danger: oklch(0.55 0.20 25);             /* 重点帮扶 / 错误 / 失败 */
+--danger-soft: oklch(0.97 0.04 25);
+--danger-border: oklch(0.85 0.08 25);
+```
+
+### 2.5 5 级帮扶标签 · 颜色映射
+
+| 等级 | Token | 视觉 |
+|---|---|---|
+| 易帮扶 | `var(--positive)` | 绿圆点 + 绿文字 + 默认边框 |
+| 较难帮扶 | `var(--blue-700)` | 蓝圆点 + 蓝文字 + 默认边框（与 accent 同色） |
+| 难帮扶 | `var(--warning)` | 金圆点 + 金文字 |
+| 重点帮扶 | `var(--danger)` | 红圆点 + 红文字 |
+| 托底帮扶 | `var(--navy-950)` | 黑圆点 + 黑文字 + 加粗（最深沉，传达"我们兜着你"） |
 
 ---
 
-## Components 约定
+## 3. Typography
 
-### 按钮
+### 3.1 字体栈（必须挂载 Google Fonts）
 
-| 类型 | 用途 | 样式 |
-|---|---|---|
-| `.btn-primary` | 主行动（开始诊断、提问、保存）| `bg: --terra`，`color: --paper-bg` |
-| `.btn-secondary` | 次行动（查看政策、查看详情）| `border: 1px solid --archive-blue`，hover 反色 |
-| `.btn-ghost` | 弱行动（取消、跳过）| `border: 1px solid --paper-line`，hover 加深 |
-
-每个页面**最多一个 primary**。
-
-### 输入框
-
-- `border: 1px solid --paper-line`
-- focus: `border-color: --archive-blue`
-- 不要圆角 > 4px
-
-### 表格
-
-- 表头小写 + UPPERCASE letter-spacing 0.05em
-- 单元格分隔用 `--paper-line-soft`（不是默认 line，避免太密）
-- hover 行：`bg: --paper-card`
-- 数字列必须 mono + tabular-nums
-
-### 卡片
-
-- `bg: --paper-card`
-- `border: 1px solid --paper-line`
-- `border-radius: --r-sm`（默认）
-- padding: 通常 24-32px
-- hover 改 border-color，不要改阴影
-
-### Tag / Pill
-
-- 字号 11-12px
-- `padding: 2px 8px` / `border-radius: 2px`（不要 pill）
-- 5 级帮扶标签按 token 上色
-
-### 章节编号（编辑感来源）
-
-每个 section 都有：
 ```html
-<div class="section-head-num">§ 1 · CITIZEN HOMEPAGE</div>
+<!-- app/layout.tsx -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 ```
-mono 字体 + terra 色 + UPPERCASE。这是这套设计的**记忆点**之一，必须保留。
+
+```css
+--font-sans: "Geist", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+--font-serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+--font-mono: "Geist Mono", "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+```
+
+**为什么挂 web fonts**：career-report 当前用 PingFang SC + Microsoft YaHei，**在 Windows 上 fallback 到 YaHei（粗笨）导致设计不精致**。Geist + Noto Sans SC 跨平台一致。
+
+### 3.2 黑名单（不用）
+
+- `Inter` / `Roboto` / `Space Grotesk` 作为西文（AI 默认懒）
+- `阿里巴巴 PuHuiTi`（创业风太强，每个产品长一样）
+- `HarmonyOS Sans`（手机品牌联想）
+- `system-ui` / `-apple-system` 作为 Display（"我放弃了字体"信号）
+
+### 3.3 Type Scale
+
+| 名称 | size | line-height | weight | family | 用法 |
+|---|---|---|---|---|---|
+| `display-xl` | clamp(48, 6.4vw, 96px) | 1 | 600 | sans | Hero 主标题 |
+| `display-l` | clamp(32, 4vw, 52px) | 1.05 | 600 | sans | section 头标题 |
+| `display` | clamp(24, 2.4vw, 32px) | 1.2 | 600 | sans | 模块标题 |
+| `display-serif` | clamp(28, 3vw, 40px) | 1.25 | 500 | serif | Mission statement / 报告封面 / pull quote |
+| `h1` | 26px | 1.25 | 600 | sans | 二级标题 |
+| `h2` | 20px | 1.4 | 600 | sans | 卡片标题 |
+| `h3` | 16px | 1.5 | 600 | sans | 小节标题 |
+| `body-l` | 17px | 1.7 | 400 | sans | 长文 body |
+| `body` | 15px | 1.65 | 400 | sans | 默认 body |
+| `body-s` | 13px | 1.55 | 400 | sans | 辅助文字 |
+| `mono` | 11-13px | 1.55 | 400-500 | mono · tabular-nums | 数据 / metadata / eyebrow |
+| `eyebrow` | 11px | 1 | 500 | mono · letter-spacing 0.16em · uppercase | section eyebrow |
+
+**关键约束**：
+- Display 字号 `letter-spacing: -0.045em`（极致紧凑，Vercel 风）
+- Body 字号 `letter-spacing: -0.005em`（轻微紧凑）
+- 所有数字必须 `font-variant-numeric: tabular-nums`
+- Eyebrow / metadata 必须 mono + uppercase + letter-spacing 0.16em
 
 ---
 
-## RISK / SAFE 决策记录
+## 4. Spacing & Layout
 
-| 决策 | 类型 | 理由 |
+### 4.1 Spacing scale（8px base）
+
+```css
+--s-1: 4px;   --s-2: 8px;    --s-3: 12px;
+--s-4: 16px;  --s-5: 24px;   --s-6: 32px;
+--s-7: 48px;  --s-8: 64px;   --s-9: 96px;
+--s-10: 144px; /* section vertical padding */
+```
+
+### 4.2 容器宽度
+
+```css
+.container { max-width: 1240px; padding: 0 40px; }   /* 主容器 */
+.container-narrow { max-width: 880px; padding: 0 40px; } /* 文章/报告 */
+.container-prose { max-width: 720px; padding: 0 40px; }  /* 长文阅读 */
+```
+
+### 4.3 Section padding
+
+- 标准 section: `padding: 144px 0;`
+- 紧凑 section（连续多个）: `padding: 88px 0;`
+- Hero: `padding: 88px 0 112px;`
+
+### 4.4 Border radius
+
+```css
+--r-sm: 4px;   /* button, input, tag */
+--r-md: 6px;   /* card 默认 */
+--r-lg: 8px;   /* large card */
+--r-xl: 12px;  /* hero card / report-card 极特殊 */
+--r-2xl: 16px; /* report-card */
+```
+
+**禁止** `border-radius: 9999px` 满天飞（pill 满屏 = AI default）。仅在 badge / dot / avatar circle 用。
+
+---
+
+## 5. Surfaces & Elevation
+
+career-report 的招牌：**层叠装饰背景** + glass-card + spotlight + gradient border。这是"作品感"的核心来源。
+
+### 5.1 Hero 暗色多层装饰（关键）
+
+```html
+<section class="relative min-h-[90vh] overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-b from-[var(--navy-950)] via-[var(--navy-900)] to-[var(--navy-800)]" />
+  <div class="absolute inset-0 aurora-bg" />        <!-- 渐变 mesh -->
+  <div class="absolute inset-0 hero-grid" />        <!-- 网格 -->
+  <div class="absolute inset-0 noise-overlay" />    <!-- 噪点 -->
+  <ConstellationBG />                                <!-- 星座粒子 -->
+  <!-- decorative orbs -->
+  <div class="absolute top-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-[var(--blue-500)] opacity-[0.06] blur-[150px]" />
+  <!-- vertical accent lines -->
+</section>
+```
+
+详见 `D:\career-report\app\page.tsx` Hero 部分。**直接 fork**。
+
+### 5.2 Glass card
+
+```css
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.82));
+  backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+```
+
+### 5.3 Spotlight card（鼠标跟随光晕）
+
+直接 fork career-report `app/page.tsx:81-106` 的 `SpotlightCard` 组件。
+
+### 5.4 Gradient border（hover 显现彩色边）
+
+直接 fork career-report `globals.css:336-368` 的 `.gradient-border-card`。
+
+### 5.5 Btn glow（主 CTA 蓝色发光）
+
+```css
+.btn-glow {
+  box-shadow:
+    0 0 0 1px oklch(0.55 0.18 250 / 0.5),
+    0 1px 3px rgba(0,0,0,0.1),
+    0 4px 20px oklch(0.55 0.18 250 / 0.25);
+}
+.btn-glow:hover {
+  box-shadow:
+    0 0 0 1px oklch(0.65 0.16 245 / 0.6),
+    0 8px 32px oklch(0.55 0.18 250 / 0.4),
+    0 0 60px oklch(0.55 0.18 250 / 0.15);
+  transform: translateY(-1px);
+}
+```
+
+### 5.6 Report card（报告页专用）
+
+```css
+.report-shell {
+  background:
+    linear-gradient(180deg, var(--blue-50) 0%, transparent 40%),
+    radial-gradient(900px 500px at 100% 10%, oklch(0.9 0.04 250 / 0.4), transparent 60%),
+    #fff;
+}
+.report-card {
+  background: #fff;
+  border: 1px solid var(--report-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+```
+
+---
+
+## 6. Motion
+
+### 6.1 Easing
+
+```css
+--ease-out: cubic-bezier(0.22, 1, 0.36, 1);   /* 默认 */
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+--ease-spring: cubic-bezier(0.16, 1, 0.3, 1);  /* 弹性收尾 */
+```
+
+### 6.2 Duration
+
+| 用途 | 时长 |
+|---|---|
+| micro（hover / focus） | 200ms |
+| short（按钮 / tab 切换） | 250-300ms |
+| medium（scroll reveal） | 450-700ms |
+| long（hero 入场） | 800-1200ms |
+| signature（aurora drift） | 20s loop |
+
+### 6.3 命名动画（来自 career-report globals.css）
+
+| Class | 用途 |
+|---|---|
+| `aurora-bg` | Hero 暗底渐变 mesh，20s loop drift |
+| `border-beam` | 边框扫光（4s rotate） |
+| `animate-float` / `-delayed` / `-slow` | 图标轻微漂浮 |
+| `pulse-dot` | 数据点呼吸光晕 |
+| `radar-sweep` | 雷达图扫描线 6s loop |
+| `dash-animated` | 虚线流动（连接线） |
+| `text-shimmer` | 文字闪光（数据 counter） |
+| `text-gradient-hero` | Hero 主标题白→淡蓝渐变 |
+| `constellation-line` | 星座线脉动 |
+| `animate-cta-pulse` | 主 CTA 阴影呼吸 2.4s |
+| `stat-underline` | stat 数字下方蓝线 |
+
+### 6.4 Scroll reveals（必须用）
+
+```tsx
+import { motion, useInView } from "framer-motion";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+  })
+};
+```
+
+每个 section 进入视口时 stagger 入场，永不同时 mount。
+
+### 6.5 `prefers-reduced-motion` 必须支持
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .animate-cta-pulse, .aurora-bg, .pulse-dot { animation: none; }
+}
+```
+
+---
+
+## 7. Component Library
+
+### 7.1 Button（4 层级）
+
+| Variant | 用法 | 样式 |
 |---|---|---|
-| Display 用宋体 `Noto Serif SC` | **RISK** | 95% 政务/SaaS 都黑体；宋体做"档案/认真"感，市民收到报告像收到一份认真给的东西 |
-| Accent 用暖橘陶 `#D97757` | **RISK** | 区隔典型政务蓝；克制只用主 CTA + 关键标记 |
-| 章节编号 `§ N · TITLE` | **RISK** | 编辑感来源；区隔 SaaS 默认风 |
-| 不用阿里 PuHuiTi 等网红免费字体 | **RISK** | 质量好但每个产品都一样，副业商业化要识别度 |
-| 米白 `#FAF8F4` 底色（不是纯白）| **RISK** | 暖灰系基底，避免冷漠 |
-| Body 用思源黑体 | SAFE | 中文阅读最佳，无争议 |
-| Tabular-nums 数据字体 | SAFE | 报告/表格行业标准 |
-| 8px 基准间距 | SAFE | 行业标准 |
-| `border-radius: 4px` 默认 | SAFE | 不冒险 |
-| 不做 dark mode V1 | SAFE | 单兵交付节流 |
+| `primary` | 唯一主 CTA | `bg-[var(--blue-500)] text-white rounded-2xl ring-2 ring-white/20 + btn-glow + animate-cta-pulse` |
+| `secondary` | 次行动 | `bg-white text-[var(--navy-900)] border border-[var(--blue-200)]` |
+| `soft` | 弱行动 | `bg-[var(--blue-50)] text-[var(--navy-700)]` |
+| `link` | inline 链接 | underline + `text-[var(--blue-600)]` |
+
+每页**最多一个 primary**。
+
+### 7.2 Badge（小标签）
+
+```tsx
+<Badge variant="outline" className="border-white/15 bg-white/[0.05] text-white/70 backdrop-blur-md px-4 py-1.5 text-xs tracking-[0.15em] font-light">
+  <span className="size-1.5 rounded-full bg-emerald-400 mr-2 animate-pulse" />
+  智能职业定位分析系统
+</Badge>
+```
+
+Hero 暗底用 outline + backdrop-blur；亮底用 secondary 实色。
+
+### 7.3 Stats counter
+
+直接 fork career-report `app/page.tsx:47-78` 的 `AnimatedCounter`。配 `stat-underline` class。
+
+### 7.4 Spotlight card
+
+直接 fork `SpotlightCard` 组件 + `.spotlight-card` CSS。卡片内套 `glass-card gradient-border-card`。
+
+### 7.5 Report KPI
+
+```tsx
+<div className="report-kpi">
+  <span className="n">17</span>
+  <span className="u">/ 20</span>
+</div>
+```
+
+```css
+.report-kpi .n {
+  font-size: clamp(20px, 3.4vw, 36px);
+  font-weight: 700;
+  color: var(--blue-500);
+  letter-spacing: -0.02em;
+}
+.report-kpi .u {
+  font-size: 11px;
+  color: var(--report-ink-muted);
+}
+```
+
+### 7.6 Report chip（带语义色）
+
+```tsx
+<span className="report-chip" data-tone="positive">强</span>
+<span className="report-chip" data-tone="warning">一般</span>
+<span className="report-chip" data-tone="danger">弱</span>
+```
+
+详见 `globals.css:574-604`。直接 fork。
+
+### 7.7 Report bar（蓝渐变进度条）
+
+```css
+.report-bar { height: 6px; background: var(--blue-100); border-radius: 9999px; }
+.report-bar-fill { background: linear-gradient(90deg, var(--blue-400), var(--blue-600)); }
+```
+
+### 7.8 Report takeaway（章节核心观点）
+
+```css
+.report-takeaway {
+  border-left: 3px solid var(--blue-500);
+  padding: 10px 14px;
+  background: var(--blue-50);
+  border-radius: 0 8px 8px 0;
+  color: var(--navy-800);
+}
+```
+
+### 7.9 Section wrapper（报告章节容器）
+
+直接 fork `D:\career-report\components\report\section-wrapper.tsx`。约定：
+- 编号 `01 / 06` mono pill + `Section` eyebrow
+- 标题 + meta
+- 可选 takeaway 引言块
+- 内部内容
+- `data-pdf-section` attribute（PDF 导出用）
+
+### 7.10 Tag（5 级帮扶 + 通用）
+
+```tsx
+<span className="tag" data-level="easy">易帮扶</span>
+<span className="tag" data-level="semi">较难帮扶</span>
+<span className="tag" data-level="hard">难帮扶</span>
+<span className="tag" data-level="focus">重点帮扶</span>
+<span className="tag" data-level="bottom">托底帮扶</span>
+```
+
+```css
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: white;
+}
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+.tag[data-level="easy"]::before { background: var(--positive); }
+.tag[data-level="semi"]::before { background: var(--blue-500); }
+.tag[data-level="hard"]::before { background: var(--warning); }
+.tag[data-level="focus"]::before { background: var(--danger); }
+.tag[data-level="bottom"]::before { background: var(--navy-950); }
+```
+
+### 7.11 Sandbox（嵌入式产品片段）
+
+`url-bar dots + url + tag` + 内部 `.frag-qa-q / .frag-qa-meta / .frag-qa-a / .frag-qa-cite`。详见之前的 v7 demo `design-demo-blue.html` 实现，可直接 fork。
+
+### 7.12 Admin sidebar
+
+`navy-950` 暗底 + 白文字 + `rgba(255,255,255,0.07)` active state + brand mark + section eyebrows + user pill at bottom。
+
+### 7.13 Admin table
+
+```css
+th {
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-muted);
+  background: var(--paper);
+}
+td { padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+.avatar { /* squircle 4px, blue-50 bg, blue-700 text, blue-100 border */ }
+```
 
 ---
 
-## Decisions Log
+## 8. Page Templates
 
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2026-05-08 | 初始设计系统创建（基于 V8 plan + Memorable thing "在政府门口，但比政府温暖"）| 政府场景 + 失业市民焦虑 + 副业商业化三股力的折中——编辑感档案风格 |
+### 8.1 市民端首页
+
+**结构**（fork career-report `app/page.tsx`，改业务文案）：
+1. **Hero**（暗 navy + aurora + grid + constellation + 雷达可视）
+2. **Process steps** 三卡片（政策问答 / 职业诊断 / 创业诊断）+ 连接虚线
+3. **Stats bar** 4 数字（30 篇政策 · 5 级帮扶 · ?? 已服务 · 平均 12 分钟）
+4. **Features** 2x2（核心能力）
+5. **Trust** 暗底 banner + 政府服务标准 / AI 技术驱动 / 数据安全
+6. **Footer**（简洁，加 colophon）
+7. `MobileStickyCTA` 浮动 CTA
+
+### 8.2 政策问答页 `/qa`
+
+**新页面**（career-report 没有，sbj-website 新做）：
+- Hero 较短（不要全屏 navy，用 white + 简单 eyebrow + h1）
+- **双页签**：政策与办事 · 创业与行业（spec 见 V8 plan §4）
+- 3 个热点问题预设
+- 自由问输入框
+- AI 回答区：左 2px navy rule + AI badge + 命中状态 + 引用 + 免责
+- 1000 字限制 + tabular-nums 字符计数
+
+### 8.3 诊断流程页 `/diagnosis/career`
+
+**多步流程**（fork career-report `app/form` + `app/quiz` + `app/interview`）：
+- Step 1: 输入页（简历/学历/经验/目标岗）
+- Step 2: 量表 12 道（career-report 是 6 道，扩到 12）
+- Step 3: AI 访谈 4 题
+- Step 4: 报告生成 loading（fork career-report `app/loading`）
+
+### 8.4 报告查看页 `/report`
+
+**直接 fork** career-report `app/report/page.tsx` + 6 个 section 组件。改 prompt + 业务字段，结构和组件不变。
+- 用 `report-shell` 包外层
+- 用 `SectionWrapper` 包每章
+- KPI / chip / bar / takeaway / radar 全部复用
+
+### 8.5 工作人员后台 `/admin`
+
+**fork** career-report `app/admin`，扩展为：
+- Sidebar（市民管理 / 诊断记录 / 服务跟踪 / 知识库 / 数据看板）
+- 市民列表（5 级帮扶筛选 + table）
+- 市民详情（简档 + 历史诊断 + 服务记录 timeline）
+- 知识库 wiki 编辑（markdown）
+
+### 8.6 Mobile
+
+career-report 已有 `MobileStickyCTA` 浮动按钮 + 响应式 grid。所有页面必须保证：
+- 手机端可读（量表、雷达图、KPI 都要响应式）
+- 触屏 tap target ≥ 44px
+- 不需要横屏才能用
 
 ---
 
-## 实现锚点
+## 9. Hard Don'ts（AI Slop 黑名单）
 
-- 演示页：`.planning/design-demo.html`（含色板 / 字体规格 / 三个模块卡 / 政策问答 / 诊断报告 / 工作人员后台 / 按钮组件）
-- 进入开发后，把演示页里的 CSS variables 直接搬到 `app/globals.css` 的 `:root`，组件按这个 token 系统构建
+不允许出现在任何 sbj-website 页面：
+
+1. ❌ **紫色/紫蓝渐变**（"AI 美学"标志）
+2. ❌ **emoji 当 icon**（📜 📊 🚀 等）—— 用 lucide-react icons
+3. ❌ **三栏等分 features grid 配 emoji 圆形 icon**——AI default 第一名
+4. ❌ **`text-gradient` 在 body 字上**（只能用在 Hero 主标题）
+5. ❌ **Inter / system-ui** 作为主西文字体
+6. ❌ **`PingFang SC`** 不挂 web 字体直接用（Windows 显示 YaHei，丑）
+7. ❌ **`border-radius: 9999px`** 满屏 pill
+8. ❌ **`box-shadow: 0 0 60px purple`** 紫色发光
+9. ❌ **居中所有 hero**——用 lg:左对齐 + 右侧可视化
+10. ❌ **AI 文案陈词**："Elevate" / "无缝" / "释放" / "下一代" / "为您打造"
+11. ❌ **"John Doe" / "Acme Corp"** 占位名——用真实感中文姓名
+12. ❌ **整数百分比**（99.99% / 50%）—— 用真实有机数字（47.2% / 12.8% / +12%）
+
+---
+
+## 10. Implementation Notes
+
+### 10.1 项目脚手架（fork career-report）
+
+```bash
+# 不重新初始化，直接 fork 整个项目作为母版
+cp -r D:/career-report/* D:/workspace/01_项目-Coding/sbj-website/
+cd D:/workspace/01_项目-Coding/sbj-website/
+# 删除 career-report 业务代码，保留：
+# - globals.css （直接用）
+# - components/ui/* （直接用）
+# - components/report/* （fork 改 prompt + 字段）
+# - lib/report-shared.ts / pdf-export.ts / admin-session.ts （直接用）
+# - app/api/interview/* （改 prompt）
+# - app/page.tsx (fork，改 hero 文案 / steps / stats / features)
+```
+
+### 10.2 关键依赖（career-report 已有）
+
+```json
+"@base-ui/react": "shadcn",
+"framer-motion": "*",
+"lucide-react": "*",
+"next": "16.2.x",
+"tailwindcss": "v4",
+"tw-animate-css": "*"
+```
+
+### 10.3 字体加载（替换 globals.css 的 font-family）
+
+```css
+/* 旧：var(--font-sans) = "PingFang SC", "Microsoft YaHei"... */
+/* 新：必须先 import Google Fonts in layout.tsx */
+@theme inline {
+  --font-sans: "Geist", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "SF Mono", monospace;
+}
+```
+
+国内 Google Fonts 慢的话，备选 `https://fonts.font.im/` 或自托管 woff2。
+
+### 10.4 必须配的全局 CSS classes（globals.css 已有，直接用）
+
+`aurora-bg` `hero-grid` `noise-overlay` `border-beam` `animate-float` `pulse-dot` `radar-sweep` `dash-animated` `text-shimmer` `spotlight-card` `gradient-border-card` `btn-glow` `text-gradient-hero` `constellation-line` `stat-underline` `glass-card` `report-shell` `report-card` `report-kpi` `report-takeaway` `report-chip` `report-quote` `report-bar` `report-divider` `animate-cta-pulse`
+
+---
+
+## 11. Decisions Log
+
+| Date | Decision | Why |
+|---|---|---|
+| 2026-05-08 | DESIGN.md v2.0 取代 v1.0（暖橘陶 → 蓝白） | 用户认 career-report 视觉，v1 暖橘陶方向已偏离；v2 直接抽取 career-report 实际代码 |
+| 2026-05-08 | 字体改 Geist + Noto Sans SC（Google Fonts） | career-report 用 PingFang SC，Windows 上 fallback 到 YaHei，渲染粗笨——挂 Google Fonts 解决 |
+| 2026-05-08 | 5 级帮扶用 OKLCH 语义色 | 对齐 sbj-website 业务（V8 plan §2.4），与 career-report 既有蓝色系兼容 |
+| 2026-05-08 | sbj-website 优先 fork career-report 代码 | 80% 视觉复用，节省开发时间，统一品牌（副业母版可复制到其他社保局） |
+
+---
+
+## 12. Reference Files（每次开发前必读）
+
+- `D:\career-report\app\globals.css` — 完整 CSS 系统
+- `D:\career-report\app\page.tsx` — 首页结构（fork 母版）
+- `D:\career-report\app\report\page.tsx` — 报告页入口
+- `D:\career-report\components\report\section-wrapper.tsx` — 报告章节包装器
+- `D:\career-report\components\report\overview-section.tsx` — 章节示例（含 emerald/amber 优势/补齐配色）
+- `~\.claude\plans\1-giggly-cat.md` — sbj-website V8 plan（业务规范）
+- `D:\workspace\01_项目-Coding\sbj-website\.planning\PROJECT.md` — 项目身份
+- `D:\workspace\01_项目-Coding\sbj-website\.planning\REQUIREMENTS.md` — 60+ 需求清单
+
+---
+
+## 13. Agent Prompt Guide（给 Claude Code 写代码用）
+
+后续在 sbj-website 写任何页面时，必须按以下顺序确认：
+
+1. ✅ 读 `DESIGN.md`（本文件）—— 确认 token 和组件库
+2. ✅ 读 `D:\career-report\app\globals.css` —— 确认 CSS classes 都存在
+3. ✅ 检查页面类型 —— 见 §8 Page Templates
+4. ✅ 优先 **fork career-report 已有页面** 改 prompt + 业务字段
+5. ✅ 不允许引入新字体、新色板、新动画 class
+6. ✅ 自检黑名单 §9（emoji / 紫渐变 / pill / Inter / 居中 hero / AI 文案）
+7. ✅ 跑响应式（手机端 + tablet + desktop）
+8. ✅ 跑 reduced-motion 测试
+
+如果 sbj-website 出现 career-report 没有的新组件需求（比如政策问答的双页签、5 级帮扶 tag），优先：
+- 用现有 token 组合
+- 命名延续 career-report 命名习惯
+- 加入 §7 Component Library
+
+---
+
+*Generated 2026-05-08 from /design-consultation v2 + /plan-design-review · DESIGN.md v2.0*
