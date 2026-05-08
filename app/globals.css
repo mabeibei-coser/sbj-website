@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/*
+ * Phase 1: minimal globals. 设计系统 tokens (DESIGN.md 里的 navy/blue/aurora) 在 Phase 2/3
+ * 真正用到 shadcn 组件时再加进来 (career-report 的 globals.css 是参考)。
+ */
+
+:root {
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+html {
+  font-family: var(--font-sans);
+}

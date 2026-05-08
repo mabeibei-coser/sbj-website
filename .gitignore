@@ -1,0 +1,58 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+
+# env files
+.env
+.env.local
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# claude agent worktree metadata
+/.claude/
+
+# secrets / 密钥防护（按 career-report 经验保留）
+*.key
+id_rsa*
+id_ed25519*
+tencent_key*
+.ssh/
+**/.ssh/
+# Windows 路径在 Git Bash 里被错误解析时留下的残片
+C\:*
+
+# Prisma 本地开发产物
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# Playwright
+playwright-report/
+test-results/
+e2e/fixtures/.tmp-*
+
+# Vitest
+.vitest-cache/
