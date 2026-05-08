@@ -1,5 +1,8 @@
 /**
- * Next.js middleware (INF-06)
+ * Next.js proxy (INF-06)
+ *
+ * Next.js 16 把 `middleware` 概念改名为 `proxy`：文件路径 middleware.ts → proxy.ts，
+ * 导出函数 middleware → proxy。功能完全等价。
  *
  * 鉴权两层:
  * 1. 路径前缀: /admin/* (页面) + /api/admin/* (API)
@@ -71,7 +74,7 @@ function isAdminOnlyApiPath(pathname: string): boolean {
   return pathname.startsWith(ADMIN_ONLY_API_PREFIX + "/") || pathname === ADMIN_ONLY_API_PREFIX;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isPage = isProtectedPagePath(pathname);
   const isApi = isProtectedApiPath(pathname);
