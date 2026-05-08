@@ -1,0 +1,30 @@
+# Node
+node_modules/
+.next/
+out/
+dist/
+
+# 环境变量（含 API key）
+.env
+.env.local
+.env.*.local
+**/.env.local
+
+# 编译/缓存
+*.tsbuildinfo
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 实验产物（PoC，不进版本库）
+experiments/**/wiki/
+experiments/**/upstream/
+experiments/**/sources-raw/*.pdf
+experiments/**/sources-raw/*.PDF
+experiments/**/reports/compile-log-*.json
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,22 @@
+node_modules/
+.env.local
+.env.*.local
+
+# 编译产物
+wiki/
+
+# 上游 clone（git submodule 处理；本地 clone 不进版本库）
+upstream/
+
+# 大文件原始素材（PDF 等可能 100MB+，不进版本库）
+sources-raw/*.pdf
+sources-raw/*.PDF
+
+# 日志
+*.log
+reports/compile-log-*.json
+
+# OS / 工具
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

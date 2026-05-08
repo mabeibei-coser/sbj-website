@@ -1,0 +1,26 @@
+{
+  "name": "llm-wiki-poc",
+  "private": true,
+  "version": "0.0.1",
+  "description": "W0 PoC: validate DeepSeek-driven wiki compilation on 3 中文政策素材",
+  "type": "module",
+  "scripts": {
+    "smoke": "tsx scripts/smoke-test.ts",
+    "pdf-to-md": "tsx scripts/pdf-to-md.ts",
+    "url-to-md": "tsx scripts/url-to-md.ts",
+    "compile": "tsx scripts/compile.ts",
+    "evaluate": "tsx scripts/evaluate.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "gray-matter": "^4.0.3",
+    "openai": "^4.79.0",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -6,8 +6,8 @@
 
 ## Current State
 
-**Phase:** Phase 0 — 前期准备（W0）
-**Status:** PROJECT INITIALIZED — 等待用户启动 W0 任务
+**Phase:** Phase 0 — 前期准备（W0），Slice B 已通过；Slice A 由家人 own，跟踪中
+**Status:** Slice B (LLM Wiki PoC) PASS — D1+D2 加权 100/100；W2 上 LLM Wiki 路线已确定，不切 RAG。Slice A (占位站 + ICP) 待家人提交。
 **Last Updated:** 2026-05-08
 
 ## What's Done
@@ -17,36 +17,38 @@
 - [x] 项目目录创建：D:\workspace\01_项目-Coding\sbj-website\
 - [x] git init
 - [x] .planning/ 结构（PROJECT.md / config.json / REQUIREMENTS.md / ROADMAP.md / STATE.md）
+- [x] **Phase 0 Slice B (INF-02) PASS** — LLM Wiki 编译方案验证完成（2026-05-08）
+  - 关键发现：上游 `llm-wiki-compiler` 是 Claude Code 插件不可直接用 → 改走"拆 prompt + DeepSeek 重写最简版"
+  - 实现：`experiments/llm-wiki-poc/`（2666+ 行 + 4 commits），DeepSeek `deepseek-v4-flash` + MinerU Agent API
+  - 评估：3 份政策素材（创卡 PDF + 2 微信文章）→ 1 主题 / 111 行文章 / 15k tokens / 44s
+  - 评分：D1=5/5（中文政策准确性）+ D2=5/5（引用回链正确性） → 加权 100/100，PASS
+  - 详见：`experiments/llm-wiki-poc/EVAL.md` + `docs/W0-LLM-Wiki-eval.md`
+- [x] **W2 build path 锁定**：fork `experiments/llm-wiki-poc/prompts/` + `scripts/compile.ts`，工程化为 `app/api/wiki/compile` + 审计日志 + token 预算
 
-## What's Next（W0 待办）
+## What's Next
 
-按 V8 plan 第十三节"下一步行动"：
+### Slice A 收尾（家人 own，本 plan 不主动推）
+- [ ] 占位站上线（家人）
+- [ ] ICP "新增网站接入" 提交（家人，jsai100.com 主体复用，约 1-3 工作日）
+- [ ] 状态填入 `docs/ICP-备案-跟踪.md`（用户 / 家人填）
 
-### 本周（用户做）
-- [ ] 找甲方问 10 件 critical 事（V8 plan 第八节对齐清单）
-  - 等保是否要求 / CRM 是否在范围内
-  - AI 答错政策的责任归属
-  - 服务器谁提供 / 数据归属
-  - 回款节奏（建议首付 ≥40%）
-  - 关系人变动应急条款
-  - 微信小程序变更项报价
-  - 创业与行业库具体几个文件 + 清单
-  - Q3 "黄浦创卡" 答案来源
-  - 创业预约电话/地址确认
-  - 知识库长期维护 SLA
-- [ ] 把 V8 plan 第二、三、四节整理给甲方走读对齐
-- [ ] 个人事：查永升集团劳动合同竞业/兼职条款
+### Slice A 完成后 → 切 Phase 1（W1 脚手架）
+- [ ] 跑 `/gsd-plan-phase 1` 规划 W1（INF-03 ~ INF-12）
+- [ ] W1 关键工作：
+  - INF-03 多供应商 LLM 抽象（**直接复用 PoC 的 deepseek-client 模式**）
+  - INF-04 字段加密
+  - INF-05 审计日志（4 张表）
+  - INF-06 middleware.ts 鉴权
+  - INF-07 PIPL stub
+  - INF-08 PostgreSQL + COS
+  - INF-09 备份/灾备
+  - INF-10 监控告警
+  - INF-11 CI/CD
+  - INF-12 测试基建
 
-### 下周
-- [ ] W0 启动：腾讯云华东区开账号 + 占位站 ICP 备案 + LLM Wiki 编译试跑（3 PDF 验证）
-- [ ] DeepSeek + 备用 LLM（豆包/通义）申请 API key 各 100 元测试
-- [ ] career-report 跑"换 LLM 客户端为多供应商抽象"小实验
-
-### 两周内
-- [ ] SOW 给甲方签（含 V8 全部 20 项对齐 + IP 归属 + 信息安全责任）
-
-### 签完 SOW
-- [ ] W0 收尾，进 W1（脚手架 + 审计层 + 加密）
+### W0 平行（用户做的非编码任务，不在本 plan 范围）
+- [ ] 找甲方问 10 件 critical 事（V8 plan 第八节）
+- [ ] SOW 起草签字（含 V8 全部 20 项对齐）
 
 ## Blockers
 
@@ -55,17 +57,31 @@
 | 等保是否要求未确认 | 影响项目难度等级 | 本周问甲方 |
 | CRM 是否在合同范围未确认 | 影响是否被视为免费送 | 本周问甲方 |
 | 创业与行业库文件数量未确认 | 影响 W2 工作量 | 本周拿到清单 |
-| Q3 答案来源未提供 | 影响 W2 demo 完整度 | 本周拿到 |
-| ICP 备案未提交 | W2 demo 硬阻塞 | W0 启动 |
+| 占位站 + ICP 备案 | W2 demo 硬阻塞 | 家人本周提交"新增网站接入"，jsai100.com 既有主体走快速路径（~1-3 工作日） |
+
+（Q3 "黄浦创卡" 答案来源 blocker 已部分解除——家人已提供《黄浦创卡》PDF 手册，覆盖 12 页全套 9 项政策福利；W2 还可能需要补 3 份外部政策 PDF）
 
 ## Decisions Log
 
 详见 PROJECT.md "Key Decisions" 章节。
 
+### 2026-05-08 新增 / 验证
+
+| Decision | Outcome |
+|---|---|
+| 用 llm-wiki-compiler 作 W2 wiki 工具 | **Outcome: 部分推翻** — 上游是 Claude Code 插件不可直接换 DeepSeek。改"拆其 prompt + DeepSeek 重写最简版"，路径合规且 W2 production 可直接复用 |
+| LLM Wiki 编译方案的可行性 | **Outcome: Validated** — D1+D2 加权 100/100，W2 不切 RAG fallback |
+| MinerU 中文 PDF 解析 | **Outcome: Validated**（Agent API 免费档已够 W0 验证；W2 production 升 Precision API） |
+| DeepSeek `deepseek-v4-flash` 模型 | **Outcome: Validated** — 串行编译 / 3 元成本 / 44s 完成 3 文件 |
+| 评估只评 D1+D2，跳过 D3 D4 | **Outcome: 决策接受** — W0 只验最大未知，编译速度+增量编译留 W2 调优 |
+
 ## Phase Transitions
 
-（暂无 — 项目刚初始化）
+| Date | From | To | Trigger |
+|------|------|------|---------|
+| 2026-05-08 | (init) | Phase 0 Slice B | Slice B PASS — D1+D2 100/100 |
+| (待) | Phase 0 Slice A | Phase 1 | 家人确认占位站上线 + ICP 已提交 |
 
 ---
 
-*Last updated: 2026-05-08 after initialization*
+*Last updated: 2026-05-08 after Slice B PASS*
