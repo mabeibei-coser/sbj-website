@@ -55,11 +55,14 @@
 ## What's Next
 
 ### Phase 2 执行需要的前置（W0 用户做）
-- [ ] 腾讯云 Lighthouse + PostgreSQL CDB 实例创建
+- [ ] 腾讯云华东（上海）账号开通 + Lighthouse 实例 + PostgreSQL CDB 实例
 - [ ] DeepSeek + 豆包 + 讯飞 三家 LLM API key 充值开通
-- [ ] GitHub Secrets 配 5 项（DATABASE_URL / SESSION_SECRET / ENCRYPTION_KEY / SSH_PRIVATE_KEY / DEPLOY_HOST）
+- [ ] GitHub Secrets 配 5 项（**SSH 部署相关**，按 docs/RUNBOOK.md §1.2）：`TENCENT_HOST` / `TENCENT_USER` / `TENCENT_SSH_KEY` / `TENCENT_PORT` / `TENCENT_DEPLOY_PATH`
+- [ ] 服务器 `.env.production.local` 配齐（**业务 env**，按 `.env.example`）：`DATABASE_URL` 指 CDB 内网 / `FIELD_ENCRYPTION_KEY` / `ADMIN_PASSWORD_HASH` / `ADMIN_SESSION_PASSWORD` / 3 家 LLM key + base url + model
 - [ ] `prisma migrate deploy` 跑通（创 9 张表）
-- [ ] 政策与办事库 3 个核心 PDF（甲方 P1） + Q1/Q2 微信文章 URL（家人/甲方）
+- [ ] biz-kb 政策来源（甲方 P2，未到手）+ Q1/Q2 微信文章正式 URL（家人/甲方；knowledge-sources/ 已有 PoC 抓取版可作为 fallback）
+
+> ⚠️ 部署 env 分两处：**SSH 部署相关 5 项进 GitHub Secrets**（CI/CD 用）；**业务 env（DB/加密/LLM key）配在服务器 `.env.production.local`**（运行时用）。两组不要搞混。
 
 ### Phase 2 wave 执行顺序
 - Wave 1: 02-01 wiki-compile（CLI + Prisma 写库 + 微信抓取）
@@ -68,16 +71,18 @@
 - Wave 4: 02-06 llm-eval（50 题 golden + ≥80% 阈值）
 - Wave 5: 02-07 e2e（Playwright 双 spec + WikiPage fixture）
 
-### 用户先做（Phase 1 部署 + Phase 2 启动需要的前置）
+### 用户先做的细项清单（合并入上面 Phase 2 前置；保留作详细 reference）
 
 - [ ] 腾讯云华东（上海）账号开通 + **Lighthouse 实例** + **PostgreSQL CDB 实例**创建
 - [ ] **DeepSeek API key**（`DEEPSEEK_API_KEY`）+ 充值 ≥100 元测试额度
 - [ ] **豆包 API key**（`DOUBAO_API_KEY`）+ 配置 `DOUBAO_BASE_URL` / `DOUBAO_MODEL`
 - [ ] **讯飞 API key**（`IFLYTEK_API_KEY`）+ 配置 `IFLYTEK_BASE_URL` / `IFLYTEK_MODEL`
-- [ ] GitHub 仓库创建 + 配置 5 个 Actions Secrets（见 RUNBOOK.md 第 1 节）
+- [x] GitHub 仓库创建 — `https://github.com/mabeibei-coser/sbj-website.git` 已建
+- [ ] GitHub Actions Secrets 5 项配置（按 docs/RUNBOOK.md §1.2 字段名，不是 DATABASE_URL/SESSION_SECRET 那组）
 - [ ] `.env.production.local` 在 Lighthouse 服务器上配好（DATABASE_URL 指 CDB 内网）
-- [ ] 政策与办事库 3 个核心文件 + biz-kb 政策来源（甲方提供）
-- [ ] Q3「黄浦创卡」答案来源（甲方/家人，已提供《黄浦创卡》PDF 手册）
+- [x] 政策与办事库核心文件（甲方 P1）— knowledge-sources/ 已有 4 文件 815 行（创卡 PDF 12 页 + 2 微信文章）
+- [ ] biz-kb 政策来源（甲方 P2，未到手）
+- [x] Q3「黄浦创卡」答案来源（家人提供 PDF + MinerU 全文抽取，已入 knowledge-sources/）
 
 ### AI 可做（等用户 W0 完成后）
 
@@ -91,14 +96,15 @@
 
 | Blocker | Impact | Mitigation |
 |---|---|---|
-| 腾讯云 CDB 未开通 | `prisma migrate deploy` 阻塞 | W0 第一步 |
-| LLM API key 未到手 | T4 多供应商 fallback 无法验证 + Phase 2 自由问 API 跑不通 | W0 申请 3 家 |
-| GitHub Secrets 未配 | deploy.yml 触发后 SSH 失败 | 开通 Lighthouse 后配 |
-| ~~ICP 备案未下来~~ | ~~外网域名访问不了~~ | **已解除**：部署在 h100.jsai100.com，jsai100.com 主体已备案 |
+| 腾讯云 Lighthouse + CDB 未开通 | `prisma migrate deploy` 阻塞 + deploy.yml 没目标主机 | W0 第一步 |
+| LLM API key 未到手 | T4 多供应商 fallback 无法验证 + Phase 2 自由问 API 跑不通 | W0 申请 3 家（DeepSeek + 豆包 + 讯飞）|
+| GitHub Actions Secrets 未配 | deploy.yml SSH 步骤失败 | 开通 Lighthouse 后按 docs/RUNBOOK.md §1.2 配 5 项 TENCENT_* |
+| 服务器 .env.production.local 未配 | 应用启动即崩（FIELD_ENCRYPTION_KEY / ADMIN_SESSION_PASSWORD 缺失会 503）| 按 .env.example 全表填值 |
+| ~~ICP 备案未下来~~ | ~~外网域名访问不了~~ | **已解除**：部署在 h100.jsai100.com，jsai100.com 主体已备案；详见 STATE.md 顶部生产 URL 段（注：docs/ICP-备案-跟踪.md 是基于早期 sbj.jsai100.com 假设，已过时）|
 | 等保是否要求未确认 | 影响后续 phase 安全要求 | 本周问甲方 |
 | SOW 未签 | 合同层面交付风险 | 整理 V8 plan 走读给甲方 |
-| 政策 PDF 原件未到手 | Phase 2 wiki KB 阻塞 | 问甲方要文件清单 |
-| 创业与行业库文件数量未确认 | 影响 Phase 2 biz-kb 编译工作量 | 本周拿到清单 |
+| ~~政策 PDF 原件未到手~~ | ~~Phase 2 wiki KB 阻塞~~ | **部分解除**：knowledge-sources/ 已有 4 markdown / 815 行（创卡 PDF 12 页 + 2 微信文章），policy-kb 编译可启动；甲方追加文件随到随补 |
+| 创业与行业库文件数量未确认（甲方 P2） | 影响 Phase 2 biz-kb 编译子任务 | 不阻塞 policy-kb 启动；biz-kb 部分等清单到手再跑 wiki:compile --kb=biz |
 
 ## Decisions Log
 
@@ -129,4 +135,4 @@
 
 ---
 
-*Last updated: 2026-05-09 — Phase 2 规划完成 + autoplan review pass + 推送 GitHub*
+*Last updated: 2026-05-09 — Phase 2 规划完成 + autoplan review pass + 推送 GitHub + W0 清单 audit（修 GitHub Secrets 名字 + 部分 blocker 解除）*
