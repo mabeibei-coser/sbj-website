@@ -6,9 +6,9 @@
 
 ## Current State
 
-**Phase:** Phase 1 — 脚手架 + 工程基建（W1）代码完成，待部署
-**Status:** CODE COMPLETE — 等待 W0 前置条件（腾讯云 + API key + GitHub secrets）后部署验收；Phase 2（政策问答）规划进行中
-**Last Updated:** 2026-05-08
+**Phase:** Phase 2 — 政策问答（W2）规划完成，等待执行
+**Status:** PLAN READY — 7 plans / 5 waves，全部 4 blockers + 6 warnings 已修。等 W0 部署完成（腾讯云 + LLM key + GitHub secrets）即可 `/gsd-execute-phase 2`
+**Last Updated:** 2026-05-09
 
 ## What's Done
 
@@ -36,10 +36,28 @@
 
 ## What's Next
 
-### Phase 2 规划进行中（本次 /gsd-plan-phase 2）
-- [ ] gsd-phase-researcher → RESEARCH.md
-- [ ] gsd-planner → 多份 PLAN.md（QA-01~12）
-- [ ] gsd-plan-checker → VERIFICATION_PASSED
+### Phase 2 规划完成 — 2026-05-09 落地
+- [x] CONTEXT.md（29 D-NN 决策） + PATTERNS.md（38 files → analog）
+- [x] gsd-planner 生成 7 PLAN.md / 5 waves（QA-01~12 全覆盖）
+- [x] gsd-plan-checker 出 4 BLK + 6 WRN
+- [x] BLK 1/3/4 + WRN 6/8/10 由 revision agent 自动修
+- [x] BLK 2（TDD gates × 6）+ WRN 7（/api/qa/hot 直测）+ WRN 9（seed-wiki fixture）手改补齐
+- [x] 跳过 WRN 5（02-02 split）：内部 Task 3a/3b 已分工，独立拆出文件意义不大
+- 提交：`1441a76 docs(02): Phase 2 plan — 7 plans, 5 waves, all blockers/warnings resolved`
+
+### Phase 2 执行需要的前置（W0 用户做）
+- [ ] 腾讯云 Lighthouse + PostgreSQL CDB 实例创建
+- [ ] DeepSeek + 豆包 + 讯飞 三家 LLM API key 充值开通
+- [ ] GitHub Secrets 配 5 项（DATABASE_URL / SESSION_SECRET / ENCRYPTION_KEY / SSH_PRIVATE_KEY / DEPLOY_HOST）
+- [ ] `prisma migrate deploy` 跑通（创 9 张表）
+- [ ] 政策与办事库 3 个核心 PDF（甲方 P1） + Q1/Q2 微信文章 URL（家人/甲方）
+
+### Phase 2 wave 执行顺序
+- Wave 1: 02-01 wiki-compile（CLI + Prisma 写库 + 微信抓取）
+- Wave 2: 02-02 qa-foundation（自由问 API + 三层防线）+ 02-03 hot-questions（并行）
+- Wave 3: 02-04 citizen-ui（/qa 双页签）+ 02-05 admin-wiki-editor（并行）
+- Wave 4: 02-06 llm-eval（50 题 golden + ≥80% 阈值）
+- Wave 5: 02-07 e2e（Playwright 双 spec + WikiPage fixture）
 
 ### 用户先做（Phase 1 部署 + Phase 2 启动需要的前置）
 
