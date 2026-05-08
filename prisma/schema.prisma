@@ -1,0 +1,204 @@
+// sbj-website Phase 1 Prisma schema
+// 业务表（4 张）+ 审计表（4 张）+ wiki 历史表
+// REQ 覆盖: INF-05 (audit) / INF-04 字段加密的 columns / INF-07 (consent) / INF-08 (DB)
+//
+// 设计原则:
+// - 加密字段标 ENCRYPTED 注释，运行时由 lib/encryption.ts 在 service 层加解密
+// - phone 同时存 phone (encrypted) + phone_hash (SHA256，可索引、可比较)
+// - PIPL 删除走真删 + onDelete: Cascade，不留软删除标记 (INF-07 要求)
+// - 审计表只追加不修改，无 updatedAt
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// 业务表
+// ============================================================================
+
+/// 市民档案 (CRM 的主体)
+/// 5 级帮扶标签: easy / hard / very_hard / focus / safety_net
+model CitizenProfile {
+  id             String    @id @default(cuid())
+  /// 手机号密文 (AES-256-GCM, 由 lib/encryption.ts 处理)
+  phoneEncrypted String    @map("phone_encrypted")
+  /// 手机号 SHA256，用于唯一性约束 + 工作人员搜索 + PIPL 删除查询
+  phoneHash      String    @unique @map("phone_hash")
+  /// 姓名密文，可选
+  nameEncrypted  String?   @map("name_encrypted")
+  tier           String? // easy | hard | very_hard | focus | safety_net (Phase 3 才赋值)
+  tierAssignedAt DateTime? @map("tier_assigned_at")
+  tierAssignedBy String?   @map("tier_assigned_by") // admin user id, null = AI 自动
+  tierSource     String?   @map("tier_source") // auto | manual
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  diagnosisRecords DiagnosisRecord[]
+  serviceLogs      ServiceLog[]
+  consentRecords   ConsentRecord[]
+
+  @@index([tier])
+  @@index([createdAt])
+  @@map("citizen_profiles")
+}
+
+/// 诊断记录 (career = 职业诊断, biz = 创业诊断)
+model DiagnosisRecord {
+  id                     String   @id @default(cuid())
+  citizenId              String   @map("citizen_id")
+  type                   String // career | biz
+  /// 输入数据 JSON: 量表答案 / 访谈轮次 / 项目信息等
+  inputData              Json?    @map("input_data")
+  /// 简历内容密文 (仅 career 用，AES-256-GCM)
+  resumeContentEncrypted String?  @map("resume_content_encrypted")
+  /// 报告数据 JSON: 各章节 + 5 级标签建议
+  reportData             Json?    @map("report_data")
+  status                 String   @default("pending") // pending | generating | completed | failed
+  errorMessage           String?  @map("error_message")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  citizen CitizenProfile @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([type, status])
+  @@index([createdAt])
+  @@map("diagnosis_records")
+}
+
+/// CRM 服务跟踪记录
+model ServiceLog {
+  id          String   @id @default(cuid())
+  citizenId   String   @map("citizen_id")
+  staffId     String   @map("staff_id") // 工作人员 id
+  serviceType String   @map("service_type") // 类型 (Phase 4 定义)
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  citizen CitizenProfile @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([staffId])
+  @@index([createdAt])
+  @@map("service_logs")
+}
+
+/// 知识库 wiki 页面 (双库: policy / biz)
+/// 由 LLM Wiki Compiler 编译生成 + 工作人员后台编辑
+model WikiPage {
+  id          String    @id @default(cuid())
+  kbType      String    @map("kb_type") // policy | biz
+  slug        String
+  title       String
+  content     String // markdown 内容
+  sourceUrl   String?   @map("source_url")
+  /// 当前版本号，每次更新 +1
+  version     Int       @default(1)
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  versions WikiPageVersion[]
+
+  @@unique([kbType, slug])
+  @@index([kbType, publishedAt])
+  @@map("wiki_pages")
+}
+
+/// wiki 页面历史 (审计的一部分，每次 update 写一条)
+model WikiPageVersion {
+  id              String   @id @default(cuid())
+  wikiPageId      String   @map("wiki_page_id")
+  version         Int
+  contentSnapshot String   @map("content_snapshot")
+  editorId        String?  @map("editor_id") // admin user id
+  diffSummary     String?  @map("diff_summary")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  page WikiPage @relation(fields: [wikiPageId], references: [id], onDelete: Cascade)
+
+  @@unique([wikiPageId, version])
+  @@index([wikiPageId])
+  @@map("wiki_page_versions")
+}
+
+// ============================================================================
+// 审计表 (INF-05: 4 张, 只追加不修改)
+// ============================================================================
+
+/// 通用审计日志 (admin 写操作 + tier 变更 + 系统事件)
+model AuditLog {
+  id         String   @id @default(cuid())
+  /// "admin:userid" / "system" / "citizen:phone_hash"
+  actor      String
+  /// 动作: wiki.update / tier.change / report.generate / consent.grant 等
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  /// 修改前快照 (JSON)
+  before     Json?
+  /// 修改后快照 (JSON)
+  after      Json?
+  ip         String?
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actor, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+/// LLM 调用日志 (每次调用一条，含失败/降级)
+model LlmCallLog {
+  id           String   @id @default(cuid())
+  vendor       String // deepseek | doubao | iflytek
+  model        String
+  /// caller: qa.answer / career.interview / biz.assessment 等，便于按业务面归类
+  caller       String
+  /// SHA256(system+user) 取前 16 字节，用于 prompt 分组分析
+  promptHash   String   @map("prompt_hash")
+  tokensIn     Int      @default(0) @map("tokens_in")
+  tokensOut    Int      @default(0) @map("tokens_out")
+  latencyMs    Int      @default(0) @map("latency_ms")
+  status       String // success | failed | timeout
+  errorMessage String?  @map("error_message")
+  /// 单次调用估算成本，单位: 分 (cent)
+  costCents    Int      @default(0) @map("cost_cents")
+  /// 是否是 fallback 链中的某一档
+  isFallback   Boolean  @default(false) @map("is_fallback")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([vendor, createdAt])
+  @@index([status, createdAt])
+  @@index([caller, createdAt])
+  @@map("llm_call_logs")
+}
+
+/// PIPL 同意记录 (consent_records)
+/// citizen_id 可空：用户首次访问填手机号前给出的同意 (cookie 横幅) 也要记
+model ConsentRecord {
+  id               String   @id @default(cuid())
+  citizenId        String?  @map("citizen_id")
+  /// citizen_phone_hash 在用户填手机号后回填，用于关联前后访问
+  citizenPhoneHash String?  @map("citizen_phone_hash")
+  consentType      String   @map("consent_type") // qa | career | biz | cookie | privacy_policy
+  granted          Boolean
+  /// 隐私政策版本号 (e.g. "1.0")，便于后期政策升级回查
+  version          String
+  ip               String?
+  userAgent        String?  @map("user_agent")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  citizen CitizenProfile? @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId, consentType])
+  @@index([citizenPhoneHash])
+  @@index([createdAt])
+  @@map("consent_records")
+}
