@@ -261,7 +261,8 @@ describe("callLlm fallback chain", () => {
     });
 
     expect(create).toHaveBeenCalledTimes(1);
-    const callArgs = create.mock.calls[0][0] as {
+    const allCalls = create.mock.calls as unknown as Array<[unknown]>;
+    const callArgs = allCalls[0][0] as {
       messages: { role: string; content: string }[];
       response_format?: { type: string };
     };
