@@ -83,9 +83,9 @@ describe("encryptField / decryptField", () => {
   });
 
   it("非 string 输入抛 TypeError", () => {
-    // @ts-expect-error 测试运行时类型检查
+    // @ts-expect-error 测试运行时类型检查 - 故意传 null
     expect(() => encryptField(null)).toThrow(TypeError);
-    // @ts-expect-error
+    // @ts-expect-error 测试运行时类型检查 - 故意传 undefined
     expect(() => decryptField(undefined)).toThrow(TypeError);
   });
 });
@@ -107,7 +107,7 @@ describe("hashField", () => {
   });
 
   it("非 string 输入抛 TypeError", () => {
-    // @ts-expect-error
+    // @ts-expect-error 测试运行时类型检查 - 故意传 number
     expect(() => hashField(123)).toThrow(TypeError);
   });
 });

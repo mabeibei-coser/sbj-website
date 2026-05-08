@@ -204,7 +204,6 @@ export async function callLlm<T = string>(opts: CallLlmOpts<T>): Promise<CallLlm
       return await callOnce(bundle, opts, isFallback, promptHashValue);
     } catch (err) {
       if (i === 0) primaryError = err;
-      // eslint-disable-next-line no-console
       console.warn(`[llm-client] ${v} 失败:`, err instanceof Error ? err.message : err);
       // 继续尝试下一档
     }
