@@ -25,6 +25,13 @@ experiments/**/sources-raw/*.pdf
 experiments/**/sources-raw/*.PDF
 experiments/**/reports/compile-log-*.json
 
+# Claude Code worktree 元数据（每台机器独立）
+.claude/worktrees/
+.claude/settings.local.json
+
+# 业务资料原件（含甲方 PDF 等大文件，不进版本库）
+knowledge/
+
 # IDE
 .vscode/
 .idea/
