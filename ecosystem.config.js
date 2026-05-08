@@ -11,7 +11,7 @@ module.exports = {
       name: "sbj-website",
       // 通过 next 的二进制入口启动，避免跨平台 `npm start` 的 shell 解析问题
       script: "node_modules/next/dist/bin/next",
-      args: "start -p 3001",
+      args: "start -p 3002",
       cwd: "./",
       instances: 1,
       exec_mode: "fork",
@@ -20,7 +20,7 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: "production",
-        PORT: 3001,
+        PORT: 3002,
       },
       error_file: "./logs/err.log",
       out_file: "./logs/out.log",
