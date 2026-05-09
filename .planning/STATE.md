@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: executing
+last_updated: "2026-05-09T09:55:00.000Z"
+progress:
+  total_phases: 9
+  completed_phases: 0
+  total_plans: 7
+  completed_plans: 3
+  percent: 43
+---
+
 # STATE — sbj-website
 
 > 项目记忆。每次切换 phase / 完成关键节点时更新。
@@ -6,8 +20,8 @@
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）Wave 1 完成，Wave 2 ready
-**Status:** EXECUTING — 7 plans / 5 waves，**Wave 1 (02-01 wiki-compile) PASS**：4 CLI + 2 prompt + wiki-config + npm scripts 全部就位；smoke 验 callLlm OK；publish 真写库（WikiPage(kb=policy)=1 + WikiPageVersion=1 + AuditLog wiki.publish=1）；2 篇微信文章存档（自检产物）。Wave 2（02-02 自由问 + 02-03 热点 并行）可启动。
+**Phase:** Phase 2 — 政策问答（W2）Wave 2 进行中
+**Status:** EXECUTING — 7 plans / 5 waves，**Wave 2 Plan 02-02 qa-foundation PASS**：三层防护（sanitizer D-13 + pg_trgm 检索 D-08/09 + citations 白名单 D-12）+ 两次显式 callLlm（qa.answer / qa.answer.retry）+ POST /api/qa/answer 完整编排；35 新增测试全过，总计 67 单测通过。02-03 hot-questions 可与 02-02 并行或顺序启动。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -66,6 +80,15 @@
   - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
   - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
   - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
+- [x] **Phase 2 Wave 2 — Plan 02-02 qa-foundation** — 2026-05-09
+  - 1 atomic commit：3c361b1（15 files, 931 insertions）
+  - **三层防护**：sanitizer（detectPromptInjection 6 patterns）+ retrieve（pg_trgm word_similarity + ILIKE 降级）+ citations（gov.cn + /wiki/policy|biz regex 白名单）
+  - **两次显式 callLlm**：caller=qa.answer 第一次 + caller=qa.answer.retry 白名单失败后显式第二次（运营遥测 BLOCKER 3 完全修复）
+  - **POST /api/qa/answer**：D-06 Zod schema + D-27 ConsentRecord 校验 + D-29 双层 catch 兜底
+  - **TDD**：Task 1/2/3b 三组 RED→GREEN→REFACTOR gate 全留痕通过
+  - **偏差修复**：threshold <= 改正 / TS ES2017 regex s flag 替换 / meta.ip null→undefined / pg 包缺失改用 $executeRawUnsafe
+  - **测试**：35 新增 qa 测试 / 总计 67 单测全过 / typecheck exit 0
+  - 详见：`.planning/phases/02-policy-qa/02-02-SUMMARY.md`
 - [x] **Phase 2 Wave 1 — Plan 02-01 wiki-compile** — 2026-05-09
   - 2 commits：a063b7b（4 CLI + 2 prompt + wiki-config + npm scripts + .gitignore + .gitkeep）+ b651755（拷贝 PoC 3 份 sources 到 canonical）
   - **smoke**：`npm run wiki:smoke` OK，vendor=deepseek model=deepseek-v4-flash 1376ms，LlmCallLog caller=qa.smoke 写入
@@ -80,6 +103,7 @@
 ## What's Next
 
 ### Phase 2 执行需要的前置（W0 用户做）
+
 - [ ] 腾讯云华东（上海）账号开通 + Lighthouse 实例 + PostgreSQL CDB 实例（**Wave 2 起阻塞**：API 路由要写 DB）
 - [x] DeepSeek key（`deepseek-v4-flash`） — 已填 .env.local
 - [x] 讯飞 key（maas-coding-api / astron-code-latest） — 已填 .env.local
@@ -92,6 +116,7 @@
 > ⚠️ 部署 env 分两处：**SSH 部署相关 5 项进 GitHub Secrets**（CI/CD 用）；**业务 env（DB/加密/LLM key）配在服务器 `.env.production.local`**（运行时用）。两组不要搞混。
 
 ### Phase 2 wave 执行顺序
+
 - Wave 1: 02-01 wiki-compile（CLI + Prisma 写库 + 微信抓取）
 - Wave 2: 02-02 qa-foundation（自由问 API + 三层防线）+ 02-03 hot-questions（并行）
 - Wave 3: 02-04 citizen-ui（/qa 双页签）+ 02-05 admin-wiki-editor（并行）
@@ -152,6 +177,8 @@
 | Phase 2 中文全文搜索方案 | pg_trgm + word_similarity（autoplan B1） | tsvector('simple') 对中文无词界，整段变单 token，召回近零；pg_trgm 字符三元组无需分词 |
 | Phase 2 consent 查询字段 | phone → HMAC hash（移除 consentId，autoplan F2） | consentId 字段冗余，统一用 phone_hash 查 ConsentRecord，API schema 简化 |
 | Phase 2 开发数据库方案 | Lighthouse 自建 Postgres 14 + sbj_dev 库 + SSH tunnel | CDB 最低规格 ~50 元/月，但 Lighthouse 现成且已装 PG14；建独立 sbj_dev 与 sbj_prod 隔离避免开发污染生产；UAT 阶段再升级真 CDB |
+| 检索阈值判定符号（02-02） | `<= RETRIEVAL_THRESHOLD` 而非 `<` | score 等于阈值（0.1）时不应触发 LLM 调用；`<` 会放行 score=0.1，`<=` 才符合 plan behavior |
+| 两次 callLlm 显式 caller（02-02） | answer.ts 显式发两次 callLlm（qa.answer + qa.answer.retry） | 避免 lib/llm-client.ts 内部 validator 复用同 caller，运营可按 caller 精确检索"被重试的调用" |
 
 ## Phase Transitions
 
@@ -162,7 +189,8 @@
 | 2026-05-09 | Phase 1 | Phase 2 规划完成 | 7 plans / 5 waves / autoplan B1+F2+F3 修复 |
 | 2026-05-09 | Phase 2 plan | Phase 2 **Wave 1 ready** | npm install + prisma generate + .env.local 完成（DeepSeek + 讯飞配齐） / 32 单测 PASS |
 | 2026-05-09 | Wave 1 ready | Wave 1 PASS | Plan 02-01 wiki-compile 完成（2 commits a063b7b + b651755）；smoke + dry-run + publish 三档全通；WikiPage 写库链路验证；Wave 2 ready |
+| 2026-05-09 | Wave 2 started | Wave 2 Plan 02-02 PASS | Plan 02-02 qa-foundation 完成（commit 3c361b1）；三层防护 + answer API + 67 单测 PASS；Wave 2 02-03 hot-questions ready |
 
 ---
 
-*Last updated: 2026-05-09 — Phase 2 Wave 1 (02-01 wiki-compile) PASS：4 CLI + 2 prompt + npm scripts + 真写库验证，2 commits 提交*
+*Last updated: 2026-05-09 — Phase 2 Wave 2 Plan 02-02 (qa-foundation) PASS：三层防护 + POST /api/qa/answer + 两次显式 callLlm（qa.answer / qa.answer.retry）+ 67 单测 PASS，1 atomic commit 3c361b1*
