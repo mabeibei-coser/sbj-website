@@ -58,29 +58,73 @@ export function FreeAsk({ kbType }: FreeAskProps) {
     }
   }
 
+  const submitDisabled = submitting || question.trim().length < 2;
+
   return (
-    <section aria-label="自由问" className="glass-card border border-[var(--border)] p-6 space-y-4">
+    <section
+      aria-label="自由问"
+      style={{
+        border: "1px solid #e5e7eb",
+        borderRadius: "12px",
+        background: "#ffffff",
+        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04)",
+        padding: "1.5rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+      }}
+    >
       <div>
         {/* Section eyebrow */}
         <div
-          className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--text-muted)] mb-2"
-          style={{ fontFamily: "var(--font-mono)" }}
+          style={{
+            fontSize: "11px",
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.16em",
+            color: "#64748b",
+            marginBottom: "0.5rem",
+            fontFamily: "var(--font-mono)",
+          }}
         >
           智能问答
         </div>
         <h2
-          className="text-2xl font-semibold text-[var(--text-primary)]"
-          style={{ letterSpacing: "-0.02em" }}
+          style={{
+            fontSize: "24px",
+            fontWeight: 600,
+            color: "#0f172a",
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
         >
           自由问
         </h2>
-        <p className="text-[13px] text-[var(--text-muted)] mt-1.5">
+        <p style={{ fontSize: "13px", color: "#64748b", marginTop: "6px", marginBottom: 0 }}>
           命中知识库时给出真实引用与免责声明；未命中时建议联系窗口。
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-3">
-        <label htmlFor="qa-question" className="sr-only">问题</label>
+      <form
+        onSubmit={onSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+      >
+        <label
+          htmlFor="qa-question"
+          style={{
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            padding: 0,
+            margin: "-1px",
+            overflow: "hidden",
+            clip: "rect(0,0,0,0)",
+            whiteSpace: "nowrap",
+            borderWidth: 0,
+          }}
+        >
+          问题
+        </label>
         <textarea
           id="qa-question"
           value={question}
@@ -89,26 +133,61 @@ export function FreeAsk({ kbType }: FreeAskProps) {
           disabled={submitting}
           rows={3}
           placeholder={kbType === "policy" ? "例：青年初次就业有哪些补贴？" : "例：黄浦区有哪些创业孵化基地？"}
-          className="w-full p-3 rounded-md border border-[var(--border)] bg-[var(--surface)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue-500)] disabled:opacity-50"
+          style={{
+            width: "100%",
+            padding: "0.75rem",
+            borderRadius: "6px",
+            border: "1px solid #e5e7eb",
+            background: "#ffffff",
+            fontSize: "14px",
+            fontFamily: "inherit",
+            resize: "vertical",
+            opacity: submitting ? 0.5 : 1,
+            outline: "none",
+            boxSizing: "border-box",
+          }}
         />
 
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-[var(--text-muted)] tabular-nums">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "12px", color: "#64748b", fontVariantNumeric: "tabular-nums" }}>
             {question.length} / {MAX_QUESTION_LEN}
           </span>
           <button
             type="submit"
-            disabled={submitting || question.trim().length < 2}
-            className="px-5 py-2 bg-[var(--blue-500)] text-white text-sm rounded-md font-medium disabled:opacity-50 hover:bg-[var(--blue-600)] transition-colors flex items-center gap-2"
+            disabled={submitDisabled}
+            style={{
+              padding: "0.5rem 1.25rem",
+              background: submitDisabled ? "#93c5fd" : "#2563eb",
+              color: "#ffffff",
+              fontSize: "14px",
+              fontWeight: 500,
+              borderRadius: "6px",
+              border: "none",
+              cursor: submitDisabled ? "not-allowed" : "pointer",
+              opacity: submitDisabled ? 0.7 : 1,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              transition: "background 150ms",
+            }}
           >
-            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {submitting && <Loader2 style={{ width: "1rem", height: "1rem" }} className="animate-spin" />}
             {submitting ? "查询中..." : "查询"}
           </button>
         </div>
       </form>
 
       {error && (
-        <div role="alert" className="text-sm text-[var(--negative)] bg-[var(--negative-bg)] p-3 rounded-md">
+        <div
+          role="alert"
+          style={{
+            fontSize: "14px",
+            color: "#b91c1c",
+            background: "#fef2f2",
+            padding: "0.75rem",
+            borderRadius: "6px",
+          }}
+        >
           {error}
         </div>
       )}
