@@ -237,7 +237,7 @@ function cleanWechatHtml(html: string): string {
  * 然后转换主要标签 + 兜底剥离。
  */
 function htmlToMarkdown(html: string): string {
-  let s = html;
+  const s = html;
 
   // 取 js_content（微信主体）→ article → main → body 兜底
   const jsContent = s.match(/<div\b[^>]*id="js_content"[^>]*>([\s\S]*?)<\/div>/i);

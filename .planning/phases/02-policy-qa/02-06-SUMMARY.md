@@ -89,7 +89,7 @@ const CITATION_THRESHOLD = 0.8;  // 80%
 **1. [Rule 3 - Blocking] vitest.config.ts 将 tests/llm-eval/** 全部 exclude**
 - **Found during**: Task 2 RED phase
 - **Issue**: `npx vitest run tests/llm-eval/run.test.ts` 显示 "No test files found"，因为根 vitest.config 有 `exclude: ["tests/llm-eval/**"]`
-- **Fix**: 
+- **Fix**:
   1. 新建 `tests/llm-eval/vitest.config.ts` 专用配置（用于独立跑 llm-eval tests）
   2. 修改根 `vitest.config.ts` 去掉 `tests/llm-eval/**` exclude，让 `npm run test:unit` 也覆盖 run.test.ts
 - **Files modified**: vitest.config.ts, tests/llm-eval/vitest.config.ts（new）
