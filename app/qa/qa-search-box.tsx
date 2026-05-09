@@ -13,7 +13,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { ArrowRight, Loader2, Briefcase, Rocket } from "lucide-react";
 import type { HotQuestion, KbType } from "@/lib/qa/hot-questions";
 
@@ -30,6 +30,10 @@ export interface QaSearchBoxProps {
   onSubmit?: (q: string, kb: KbType) => void;
   /** 父组件标记 pending 时禁用提交（仅 footer 模式有意义） */
   pending?: boolean;
+  /** 外部注入预填问题（后续提问点击）；组件消费后调 onPrefillConsumed 重置 */
+  prefillQuestion?: string;
+  /** 消费 prefillQuestion 后回调，父组件重置为 undefined */
+  onPrefillConsumed?: () => void;
   /** 样式变体 */
   variant: "hero" | "footer";
 }
@@ -39,11 +43,21 @@ export function QaSearchBox({
   initialKb = "policy",
   onSubmit,
   pending = false,
+  prefillQuestion,
+  onPrefillConsumed,
   variant,
 }: QaSearchBoxProps) {
   const router = useRouter();
   const [question, setQuestion] = useState("");
   const [kb, setKb] = useState<KbType>(initialKb);
+
+  // 外部注入后续提问时填入输入框
+  useEffect(() => {
+    if (prefillQuestion !== undefined && prefillQuestion !== "") {
+      setQuestion(prefillQuestion);
+      onPrefillConsumed?.();
+    }
+  }, [prefillQuestion, onPrefillConsumed]);
 
   const trimmed = question.trim();
   const canSubmit = !pending && trimmed.length >= 2;
