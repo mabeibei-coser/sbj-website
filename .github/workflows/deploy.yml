@@ -39,7 +39,7 @@ jobs:
           port: ${{ secrets.TENCENT_PORT || 22 }}
           script: |
             set -e
-            cd ${{ secrets.TENCENT_DEPLOY_PATH }}
+            cd "${{ secrets.TENCENT_DEPLOY_PATH }}"
 
             echo "==> git pull"
             git pull --ff-only
