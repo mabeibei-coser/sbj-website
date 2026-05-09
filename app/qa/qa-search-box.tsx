@@ -14,12 +14,26 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
-import { ArrowRight, Loader2, Briefcase, Rocket } from "lucide-react";
+import { ArrowRight, Loader2, Briefcase, Rocket, Sparkles } from "lucide-react";
 import type { HotQuestion, KbType } from "@/lib/qa/hot-questions";
 
 const MAX_QUESTION_LEN = 500;
 
 const KB_LABEL: Record<KbType, string> = { policy: "就业", biz: "创业" };
+
+// AI 智能感：placeholder 循环切换不同提问示例
+const PLACEHOLDER_EXAMPLES: Record<KbType, string[]> = {
+  policy: [
+    "失业保险金能领多少？",
+    "青年初次就业有哪些补贴？",
+    "灵活就业人员怎么缴社保？",
+  ],
+  biz: [
+    "黄浦区创业担保贷款怎么申请？",
+    "创业孵化基地怎么入驻？",
+    "黄浦创卡能享受哪些福利？",
+  ],
+};
 
 export interface QaSearchBoxProps {
   /** 仅 variant=hero 用：传入则显示热点卡片网格 */
@@ -50,6 +64,9 @@ export function QaSearchBox({
   const router = useRouter();
   const [question, setQuestion] = useState("");
   const [kb, setKb] = useState<KbType>(initialKb);
+  const [focused, setFocused] = useState(false);
+  // placeholder 循环切换索引（AI 智能感）
+  const [phIdx, setPhIdx] = useState(0);
 
   // 外部注入后续提问时填入输入框
   useEffect(() => {
@@ -58,6 +75,13 @@ export function QaSearchBox({
       onPrefillConsumed?.();
     }
   }, [prefillQuestion, onPrefillConsumed]);
+
+  // placeholder 每 4s 切换一次（仅 hero 模式 + input 没在被使用时）
+  useEffect(() => {
+    if (variant !== "hero") return;
+    const t = setInterval(() => setPhIdx((i) => i + 1), 4000);
+    return () => clearInterval(t);
+  }, [variant]);
 
   const trimmed = question.trim();
   const canSubmit = !pending && trimmed.length >= 2;
@@ -87,6 +111,9 @@ export function QaSearchBox({
   }
 
   const isHero = variant === "hero";
+  const examples = PLACEHOLDER_EXAMPLES[kb];
+  const heroPlaceholder = examples[phIdx % examples.length];
+  const placeholder = isHero ? `例：${heroPlaceholder}` : "继续问...";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: isHero ? "1.5rem" : "0.75rem" }}>
@@ -96,41 +123,53 @@ export function QaSearchBox({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.5rem",
+            gap: isHero ? "0.75rem" : "0.5rem",
             background: "#ffffff",
-            border: "1px solid #cbd5e1",
-            borderRadius: "12px",
-            padding: isHero ? "0.5rem 0.5rem 0.5rem 1.25rem" : "0.375rem 0.375rem 0.375rem 1rem",
-            boxShadow: isHero
-              ? "0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06)"
-              : "0 1px 2px rgba(15, 23, 42, 0.06)",
-            transition: "border-color 150ms, box-shadow 150ms",
+            border: focused ? "1px solid #2563eb" : "1px solid #cbd5e1",
+            borderRadius: isHero ? "16px" : "12px",
+            padding: isHero ? "0.625rem 0.625rem 0.625rem 1.125rem" : "0.375rem 0.375rem 0.375rem 1rem",
+            boxShadow: focused
+              ? "0 0 0 4px rgba(37, 99, 235, 0.12), 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 28px rgba(37, 99, 235, 0.10)"
+              : isHero
+                ? "0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 32px rgba(15, 23, 42, 0.06)"
+                : "0 1px 2px rgba(15, 23, 42, 0.06)",
+            transition: "border-color 180ms, box-shadow 220ms",
           }}
         >
+          {/* AI Sparkles 图标（仅 hero 模式）*/}
+          {isHero && (
+            <Sparkles
+              aria-hidden
+              className="qa-ai-sparkle"
+              style={{
+                width: "20px",
+                height: "20px",
+                color: focused ? "#2563eb" : "#60a5fa",
+                flexShrink: 0,
+                transition: "color 180ms",
+              }}
+            />
+          )}
           <input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value.slice(0, MAX_QUESTION_LEN))}
             onKeyDown={onInputKeyDown}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             disabled={pending}
             maxLength={MAX_QUESTION_LEN}
-            placeholder={
-              isHero
-                ? kb === "policy"
-                  ? "例：失业保险金能领多少？"
-                  : "例：黄浦区创业担保贷款怎么申请？"
-                : "继续问..."
-            }
+            placeholder={placeholder}
             aria-label="提问"
             style={{
               flex: 1,
               border: "none",
               outline: "none",
               background: "transparent",
-              fontSize: "16px", /* 必须 ≥ 16px，否则 iOS Safari focus 时会自动 zoom */
+              fontSize: isHero ? "17px" : "16px", /* 必须 ≥ 16px，否则 iOS Safari focus 时会自动 zoom */
               fontFamily: "inherit",
               color: "#0f172a",
-              padding: "0.5rem 0",
+              padding: isHero ? "0.75rem 0" : "0.5rem 0",
               minWidth: 0,
             }}
           />
@@ -144,19 +183,20 @@ export function QaSearchBox({
               alignItems: "center",
               justifyContent: "center",
               gap: "0.375rem",
-              padding: isHero ? "0.625rem 1rem" : "0.5rem 0.875rem",
+              padding: isHero ? "0.75rem 1.125rem" : "0.5rem 0.875rem",
               background: canSubmit ? "#2563eb" : "#cbd5e1",
               color: "#ffffff",
-              fontSize: "14px",
+              fontSize: isHero ? "15px" : "14px",
               fontWeight: 500,
-              borderRadius: "8px",
+              borderRadius: isHero ? "10px" : "8px",
               border: "none",
               appearance: "none",
               WebkitAppearance: "none",
               cursor: canSubmit ? "pointer" : "not-allowed",
-              transition: "background 150ms",
+              transition: "background 150ms, transform 150ms",
               touchAction: "manipulation",
               WebkitTapHighlightColor: "transparent",
+              boxShadow: canSubmit && isHero ? "0 4px 14px rgba(37, 99, 235, 0.28)" : "none",
             }}
           >
             {pending ? (
@@ -164,20 +204,22 @@ export function QaSearchBox({
             ) : (
               <ArrowRight style={{ width: "16px", height: "16px" }} />
             )}
-            <span style={{ display: isHero ? "inline" : "none" }}>{pending ? "查询中" : "提交"}</span>
+            <span style={{ display: isHero ? "inline" : "none" }}>{pending ? "查询中" : "智能问答"}</span>
           </button>
         </div>
         {isHero && (
           <div
             style={{
               fontSize: "12px",
-              color: "#64748b",
-              marginTop: "0.5rem",
+              color: "#94a3b8",
+              marginTop: "0.625rem",
               paddingLeft: "0.25rem",
               fontVariantNumeric: "tabular-nums",
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.04em",
             }}
           >
-            {question.length} / {MAX_QUESTION_LEN} · 命中知识库时给出真实引用与免责声明
+            {question.length} / {MAX_QUESTION_LEN}
           </div>
         )}
       </form>

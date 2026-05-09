@@ -17,56 +17,93 @@ export default async function QaPage() {
           overflow: "hidden",
         }}
       >
+        {/* AI 装饰：右上角散光斑 + 左下角光晕 */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: "-6rem",
+            right: "-6rem",
+            width: "20rem",
+            height: "20rem",
+            background: "radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0) 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            bottom: "-4rem",
+            left: "-4rem",
+            width: "16rem",
+            height: "16rem",
+            background: "radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0) 70%)",
+            pointerEvents: "none",
+          }}
+        />
+
         <div
           style={{
+            position: "relative",
             maxWidth: "56rem",
             margin: "0 auto",
-            padding: "5rem 1.5rem 4rem",
+            padding: "4.5rem 1.5rem 3.5rem",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             textAlign: "center",
           }}
         >
+          {/* AI 状态条：脉动绿点 + 实时检索 */}
           <div
             style={{
-              fontSize: "11px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.375rem 0.875rem",
+              borderRadius: "999px",
+              background: "rgba(255, 255, 255, 0.7)",
+              border: "1px solid #dbeafe",
+              fontSize: "12px",
               fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.18em",
-              color: "#2563eb",
-              marginBottom: "1rem",
-              fontFamily: "var(--font-mono)",
+              color: "#1e293b",
+              marginBottom: "1.75rem",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           >
-            上海黄浦区社保局 · 智能政策助理
+            <span
+              className="qa-ai-pulse"
+              style={{
+                display: "inline-block",
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: "#22c55e",
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ color: "#475569" }}>AI 助理在线</span>
+            <span style={{ color: "#cbd5e1" }}>·</span>
+            <span style={{ color: "#1e40af", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}>
+              黄浦区政策库
+            </span>
           </div>
 
           <h1
             style={{
-              fontSize: "clamp(2rem, 6vw, 3.75rem)",
+              fontSize: "clamp(2.25rem, 6.5vw, 4rem)",
               fontWeight: 600,
               color: "#0f172a",
-              lineHeight: 1.1,
-              letterSpacing: "-0.04em",
+              lineHeight: 1.05,
+              letterSpacing: "-0.045em",
               margin: 0,
+              marginBottom: "2.25rem",
             }}
           >
             黄浦区就业创业问答
           </h1>
-
-          <p
-            style={{
-              fontSize: "15px",
-              color: "#64748b",
-              marginTop: "1rem",
-              marginBottom: "2.5rem",
-              maxWidth: "32rem",
-              lineHeight: 1.6,
-            }}
-          >
-            查询黄浦区就业、创业政策；命中知识库时给出真实引用与免责声明。
-          </p>
 
           <div style={{ width: "100%", maxWidth: "44rem" }}>
             <QaSearchBox
