@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-09T02:43:52.611Z"
+status: Phase 2 Wave 5 COMPLETE — 02-07 e2e Playwright 完成：10 市民端用例 + 6 admin 用例 + seed-wiki.ts fixture；83 unit tests PASS / typecheck exit 0 / npm run llm-eval PASSED。
+last_updated: "2026-05-09T02:52:56Z"
 progress:
   total_phases: 9
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # STATE — sbj-website
@@ -20,8 +20,8 @@ progress:
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）Wave 4 进行中
-**Status:** CHECKPOINT — 02-06 llm-eval Tasks 1+2 完成，Task3 需用户审校 USER_OWN_GOLDEN_QUESTIONS.md 后继续：50题 golden JSON + 30 mock fixtures + run.ts mock/real双模式 + 阈值80%卡死；83 unit tests PASS / typecheck exit 0 / npm run llm-eval PASSED。
+**Phase:** Phase 2 — 政策问答（W2）Wave 5 完成
+**Status:** Phase 2 Wave 5 COMPLETE — 02-07 e2e Playwright 完成：10 市民端用例 + 6 admin 用例 + seed-wiki.ts fixture；83 unit tests PASS / typecheck exit 0 / npm run llm-eval PASSED。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -80,6 +80,13 @@ progress:
   - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
   - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
   - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
+- [x] **Phase 2 Wave 5 — Plan 02-07 e2e Playwright** — 2026-05-09
+  - 3 commits：5608f0a（lib/mocks/llm-mocks.ts 三档 fixture）+ 89591c9（e2e/qa-citizen.spec.ts 10用例）+ db46833（e2e/qa-admin-wiki.spec.ts 6用例 + e2e/fixtures/seed-wiki.ts）
+  - **市民端**：page.route() 拦截 /api/qa/answer；hit/miss/injection/char-counter/404x2/hot端点直测（WRN 7 fix）
+  - **admin wiki**：鉴权 3 条 always-on；已登录 3 条（ADMIN_PASSWORD env）；test 6 依赖 seed-wiki.ts fixture（WRN 9 fix）
+  - **seed-wiki.ts**：PrismaClient 直连；beforeAll create slug=e2e-fixture-policy；afterAll deleteMany；DB 不可达时 graceful null
+  - **测试**：83 单测全过（无回归）/ typecheck exit 0 / npm run llm-eval PASSED
+  - 详见：`.planning/phases/02-policy-qa/02-07-SUMMARY.md`
 - [~] **Phase 2 Wave 4 — Plan 02-06 llm-eval** — 2026-05-09 [CHECKPOINT]
   - Task1 commit 40089f0：50题 golden-questions.json（5hot+10detail+5fab+5inj+5unrel+20user_own）+ 30 mock fixtures + USER_OWN_GOLDEN_QUESTIONS.md 填空指引 + results/.gitkeep
   - Task2 commit 83842d2：TDD RED→GREEN→REFACTOR（run.test.ts 9 tests）+ run.ts mock/real双模式 + ACCURACY_THRESHOLD=0.8 卡死 + vitest.config更新
@@ -220,6 +227,8 @@ progress:
 | 2026-05-09 | Wave 3 started | Wave 3 Plan 02-04 PASS | Plan 02-04 citizen-ui 完成（commits a90c930 + c0ab0da）；globals.css v2 + 6 shadcn 组件 + /qa 主页 + wiki 详情页；71 单测 PASS；Wave 3 02-05 admin-wiki-editor ready |
 | 2026-05-09 | Wave 3 02-05 started | Wave 3 PASS | Plan 02-05 admin-wiki-editor 完成（commits ac83087 + 1f70acb + 8f9041b）；updateWikiContent 事务 + GET/PUT API + 3 UI 件；74 单测 PASS；Wave 4 02-06 llm-eval ready |
 
+| 2026-05-09 | Wave 5 started | Wave 5 PASS | Plan 02-07 e2e Playwright 完成（commits 5608f0a + 89591c9 + db46833）；市民端 10 用例 + admin 6 用例 + seed-wiki.ts fixture；83 单测 PASS；Phase 2 verification 闭环 |
+
 ---
 
-*Last updated: 2026-05-09 — Phase 2 Wave 3 PASS：Plan 02-05 (admin-wiki-editor) PASS — updateWikiContent 事务 + GET/PUT API + 列表/编辑 UI，74 单测 PASS，build exit 0；QA-12 完成；Wave 4 (02-06 llm-eval) ready*
+*Last updated: 2026-05-09 — Phase 2 Wave 5 PASS：Plan 02-07 e2e Playwright PASS — 10 市民端 + 6 admin 用例，page.route() mock，seed-wiki.ts fixture，83 unit tests PASS；Phase 2 整体 verification 闭环完成*
