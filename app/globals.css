@@ -70,10 +70,10 @@
   --text-primary: oklch(0.17 0.02 250);
   --text-muted: oklch(0.5 0.02 250);
 
-  /* Font tokens */
-  --font-sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
-  --font-heading: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  /* Font tokens — Geist + Noto Sans SC for cross-platform precision */
+  --font-sans: "Geist", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", "Cascadia Code", "Consolas", monospace;
+  --font-heading: "Geist", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 /* ============================================
