@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
 export interface WikiPageRow {
   id: string;
@@ -62,6 +63,52 @@ export interface UpdateWikiInput {
   editorId: string;
   diffSummary?: string;
 }
-export async function updateWikiContent(_input: UpdateWikiInput): Promise<WikiPageRow> {
-  throw new Error("updateWikiContent: 实现见 Plan 02-05 admin wiki editor");
+export async function updateWikiContent(input: UpdateWikiInput): Promise<WikiPageRow> {
+  const { id, content, editorId, diffSummary } = input;
+
+  // ---- 事务：read → update → version snapshot ----
+  const updated = await prisma.$transaction(async (tx) => {
+    const existing = await tx.wikiPage.findUnique({ where: { id } });
+    if (!existing) {
+      throw new Error(`WikiPage not found: ${id}`);
+    }
+
+    const newVersion = existing.version + 1;
+    const result = await tx.wikiPage.update({
+      where: { id },
+      data: {
+        content,
+        version: newVersion,
+      },
+    });
+
+    await tx.wikiPageVersion.create({
+      data: {
+        wikiPageId: id,
+        version: newVersion,
+        contentSnapshot: content,
+        editorId,
+        diffSummary: diffSummary ?? `manual edit by ${editorId}`,
+      },
+    });
+
+    return result;
+  });
+
+  // ---- 事务外：audit (D-26) ----
+  await logAudit({
+    actor: `admin:${editorId}`,
+    action: "wiki.update",
+    targetType: "wiki_page",
+    targetId: id,
+    before: { version: updated.version - 1 },
+    after: {
+      version: updated.version,
+      contentChars: content.length,
+      kbType: updated.kbType,
+      slug: updated.slug,
+    },
+  });
+
+  return toRow(updated);
 }
