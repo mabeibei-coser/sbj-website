@@ -19,25 +19,58 @@ export default async function QaPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-[var(--background)]">
       {/* Hero (短型，左对齐) */}
-      <section className="relative border-b border-[var(--border)] overflow-hidden">
-        {/* 背景：蓝白渐变 + 极细网格 */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-50)] via-[var(--blue-50)] to-transparent" />
-        <div className="absolute inset-0 hero-grid opacity-40" />
-        <div className="relative max-w-5xl mx-auto px-6 py-[88px]">
+      <section
+        style={{
+          position: "relative",
+          borderBottom: "1px solid #e5e7eb",
+          overflow: "hidden",
+          background: "linear-gradient(180deg, #eff6fb 0%, #eff6fb 40%, #ffffff 100%)",
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            maxWidth: "64rem",
+            margin: "0 auto",
+            padding: "88px 1.5rem",
+          }}
+        >
           {/* Eyebrow — mono uppercase */}
           <div
-            className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--blue-500)] mb-4"
-            style={{ fontFamily: "var(--font-mono)" }}
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              textTransform: "uppercase",
+              letterSpacing: "0.16em",
+              color: "#2563eb",
+              marginBottom: "1rem",
+              fontFamily: "var(--font-mono)",
+            }}
           >
             上海黄浦区社保局 · 智能政策助理
           </div>
           <h1
-            className="text-4xl md:text-5xl font-semibold text-[var(--text-primary)] leading-tight"
-            style={{ letterSpacing: "-0.04em" }}
+            style={{
+              fontSize: "clamp(2.25rem, 5vw, 3rem)",
+              fontWeight: 600,
+              color: "#0f172a",
+              lineHeight: 1.15,
+              margin: 0,
+              letterSpacing: "-0.04em",
+            }}
           >
             政策问答
           </h1>
-          <p className="text-[15px] text-[var(--text-muted)] mt-4 max-w-xl leading-relaxed">
+          <p
+            style={{
+              fontSize: "15px",
+              color: "#64748b",
+              marginTop: "1rem",
+              maxWidth: "36rem",
+              lineHeight: 1.6,
+              marginBottom: 0,
+            }}
+          >
             查询黄浦区就业、创业政策；命中知识库时给出真实引用与免责声明。
           </p>
         </div>
