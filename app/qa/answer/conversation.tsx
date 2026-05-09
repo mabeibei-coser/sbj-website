@@ -33,12 +33,16 @@ export function Conversation({ initialTurn }: { initialTurn: Turn }) {
   const [pending, setPending] = useState(false);
   // 控制底部输入框的当前值（供后续提问点击填入）
   const [prefillQuestion, setPrefillQuestion] = useState<string | undefined>();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  // 收集每个 turn 容器的 DOM 引用，提交后 perplexity 风格滚到该 turn 的顶部
+  const turnRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  // 新 turn 出现时滚动到底
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [turns.length, pending]);
+  // 新 turn 滚到屏幕顶部（Perplexity 风格）
+  function scrollToTurn(turnId: number) {
+    // 用 setTimeout 等 React commit + DOM ref 挂上
+    setTimeout(() => {
+      turnRefs.current.get(turnId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  }
 
   // 拉后续提问（在 result 出现后调用，fire-and-forget）
   const fetchFollowUps = useCallback(async (turnId: number, question: string, answer: string, kb: KbType) => {
@@ -86,6 +90,7 @@ export function Conversation({ initialTurn }: { initialTurn: Turn }) {
     setPrefillQuestion(undefined); // 清掉预填值
     const nextId = turns.length + 1;
     setTurns((prev) => [...prev, { id: nextId, question, kb, result: null }]);
+    scrollToTurn(nextId); // 立即把新提问推到屏幕顶部
     setPending(true);
     try {
       const res = await fetch("/api/qa/answer", {
@@ -142,14 +147,26 @@ export function Conversation({ initialTurn }: { initialTurn: Turn }) {
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", paddingBottom: "8rem" }}>
-        {turns.map((turn) => (
-          <TurnBlock
+        {turns.map((turn, i) => (
+          <div
             key={turn.id}
-            turn={turn}
-            onFollowUpClick={(q) => setPrefillQuestion(q)}
-          />
+            ref={(el) => {
+              if (el) turnRefs.current.set(turn.id, el);
+              else turnRefs.current.delete(turn.id);
+            }}
+            style={{
+              scrollMarginTop: "72px", /* 避开顶栏（返回首页 + 标题）*/
+              /* 非首屏 turn 至少一屏高，让 scrollIntoView 能真把它推到顶部
+                 （否则到达页面底部时 scroll 顶不上去）*/
+              minHeight: i > 0 ? "calc(100dvh - 12rem)" : undefined,
+            }}
+          >
+            <TurnBlock
+              turn={turn}
+              onFollowUpClick={(q) => setPrefillQuestion(q)}
+            />
+          </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {/* sticky 底部输入框 */}
