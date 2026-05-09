@@ -12,34 +12,61 @@ interface HotCardItemProps {
 
 /**
  * Single hot question card with React-controlled expand/collapse.
- * Replaces <details>/<summary> to avoid iOS Safari < 16 / WeChat browser
- * incompatibility with display:flex on <summary>.
+ * Uses div role=button instead of <button> to avoid browser default
+ * text-align:center and inconsistent flex behavior on <button>.
  */
 export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps) {
   const [open, setOpen] = useState(false);
 
+  function toggle() {
+    setOpen((v) => !v);
+  }
+
   return (
     <div className="glass-card border border-[var(--border)]">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={toggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        }}
         aria-expanded={open}
-        className="w-full cursor-pointer flex items-center gap-4 px-6 py-4 bg-transparent rounded-none appearance-none border-0 text-left"
+        className="cursor-pointer px-6 py-4"
+        style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "1rem" }}
       >
         {/* 序号 */}
         <span
-          className="shrink-0 w-6 h-6 rounded-full bg-[var(--blue-100)] text-[var(--blue-700)] text-[11px] font-medium flex items-center justify-center tabular-nums"
-          style={{ fontFamily: "var(--font-mono)" }}
+          className="shrink-0 rounded-full bg-[var(--blue-100)] text-[var(--blue-700)] text-[11px] font-medium tabular-nums"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "1.5rem",
+            height: "1.5rem",
+            fontFamily: "var(--font-mono)",
+            flexShrink: 0,
+          }}
         >
           {index + 1}
         </span>
-        <h3 className="flex-1 text-[15px] font-medium text-[var(--text-primary)] leading-snug">
+        <h3
+          className="text-[15px] font-medium text-[var(--text-primary)] leading-snug"
+          style={{ flex: 1, margin: 0 }}
+        >
           {title}
         </h3>
         {/* chevron indicator */}
         <span
-          className="shrink-0 text-[var(--text-muted)] transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          className="text-[var(--text-muted)]"
+          style={{
+            flexShrink: 0,
+            transition: "transform 200ms",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -51,7 +78,7 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
             />
           </svg>
         </span>
-      </button>
+      </div>
       {open && (
         <div className="px-6 pb-5 pt-1">
           <div className="border-t border-[var(--border)] pt-4">
