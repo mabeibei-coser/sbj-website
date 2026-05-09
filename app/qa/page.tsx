@@ -17,7 +17,7 @@ export default async function QaPage({ searchParams }: PageProps) {
   const active = parseKb(sp.kb);
 
   return (
-    <main className="min-h-screen bg-[var(--background)]">
+    <main style={{ minHeight: "100vh", background: "#fbfcfd" }}>
       {/* Hero (短型，左对齐) */}
       <section
         style={{
@@ -76,7 +76,17 @@ export default async function QaPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div
+        style={{
+          maxWidth: "64rem",
+          marginLeft: "auto",
+          marginRight: "auto",
+          padding: "2rem 1.5rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "2rem",
+        }}
+      >
         {/* Tabs */}
         <Suspense fallback={null}>
           <QaTabs active={active} />
