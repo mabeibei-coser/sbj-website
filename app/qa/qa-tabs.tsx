@@ -38,18 +38,12 @@ export function QaTabs({ active }: QaTabsProps) {
       {TABS.map((tab) => {
         const isActive = active === tab.id;
         return (
-          <div
+          <button
             key={tab.id}
+            type="button"
             role="tab"
             aria-selected={isActive}
-            tabIndex={0}
             onClick={() => setKb(tab.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setKb(tab.id);
-              }
-            }}
             style={{
               flexShrink: 0,
               padding: "0.75rem 1rem",
@@ -61,8 +55,13 @@ export function QaTabs({ active }: QaTabsProps) {
               color: isActive ? "#1d4ed8" : "#64748b",
               fontSize: "14px",
               fontWeight: 500,
+              fontFamily: "inherit",
+              textAlign: "left",
               transition: "color 150ms, border-color 150ms",
               userSelect: "none",
+              WebkitAppearance: "none",
+              appearance: "none",
+              borderRadius: 0,
             }}
           >
             <span style={{ display: "block" }}>{tab.label}</span>
@@ -77,7 +76,7 @@ export function QaTabs({ active }: QaTabsProps) {
             >
               {tab.description}
             </span>
-          </div>
+          </button>
         );
       })}
     </div>

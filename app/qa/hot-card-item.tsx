@@ -31,24 +31,26 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
         boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04)",
       }}
     >
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={toggle}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggle();
-          }
-        }}
         aria-expanded={open}
         style={{
+          width: "100%",
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           gap: "1rem",
           padding: "1rem 1.5rem",
           cursor: "pointer",
+          background: "transparent",
+          border: "none",
+          borderRadius: "12px",
+          textAlign: "left",
+          font: "inherit",
+          color: "inherit",
+          WebkitAppearance: "none",
+          appearance: "none",
         }}
       >
         {/* 序号 */}
@@ -103,7 +105,7 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
             />
           </svg>
         </span>
-      </div>
+      </button>
       {open && (
         <div className="px-6 pb-5 pt-1">
           <div className="border-t border-[var(--border)] pt-4">
