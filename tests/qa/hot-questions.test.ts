@@ -37,7 +37,7 @@ describe("getHotQuestions", () => {
       .mockResolvedValueOnce(makeMd("q2", "Q2 标题", ["s3"], "# Q2 标题\n\n正文 2\n\n## 出处\n- b\n") as never)
       .mockResolvedValueOnce(makeMd("q3", "Q3 标题", [], "# Q3 标题\n\n正文 3\n\n## 出处\n- c\n") as never);
 
-    const items = await getHotQuestions();
+    const items = await getHotQuestions("policy");
     expect(items).toHaveLength(3);
     expect(items[0].id).toBe("q1");
     expect(items[0].title).toBe("Q1 标题");
@@ -51,14 +51,14 @@ describe("getHotQuestions", () => {
 
   it("frontmatter 缺失时 fallback 用 id 当 title", async () => {
     vi.mocked(readFile).mockResolvedValue("# 无 frontmatter 的文件\n正文" as never);
-    const items = await getHotQuestions();
+    const items = await getHotQuestions("policy");
     expect(items[0].title).toBe("q1");
     expect(items[0].citations).toEqual([]);
   });
 
   it("readFile 抛错时整体 throw（让 caller 兜底）", async () => {
     vi.mocked(readFile).mockRejectedValue(new Error("ENOENT"));
-    await expect(getHotQuestions()).rejects.toThrow("ENOENT");
+    await expect(getHotQuestions("policy")).rejects.toThrow("ENOENT");
   });
 
   it("第二次调用走 cache 不再读文件", async () => {
@@ -66,8 +66,8 @@ describe("getHotQuestions", () => {
       .mockResolvedValueOnce(makeMd("q1", "T1", [], "body") as never)
       .mockResolvedValueOnce(makeMd("q2", "T2", [], "body") as never)
       .mockResolvedValueOnce(makeMd("q3", "T3", [], "body") as never);
-    await getHotQuestions();
-    await getHotQuestions();
+    await getHotQuestions("policy");
+    await getHotQuestions("policy");
     expect(readFile).toHaveBeenCalledTimes(3); // 只有第一次 3 次 IO
   });
 });

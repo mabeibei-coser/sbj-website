@@ -1,14 +1,16 @@
 /**
  * lib/qa/hot-questions.ts (QA-08 / D-14 / D-15)
  *
- * 读取 content/qa-hot/{q1,q2,q3}.md，解析 frontmatter + 正文，返回结构化对象。
- * 全程不调 LLM（D-15 硬约束：热点答案由人工编辑写入）。
- * 使用模块级 cache，process 重启失效；提供 __resetHotCacheForTest 供测试使用。
+ * 读取 content/qa-hot/{policy,biz}/{q1,q2,q3}.md，解析 frontmatter + 正文，返回结构化对象。
+ * 全程不调 LLM（D-15 硬约束：热点答案由人工编辑写入；开发期可用 LLM/WebSearch 协助撰写 .md）。
+ * 使用模块级 cache（按 kbType 分桶），process 重启失效；提供 __resetHotCacheForTest 供测试使用。
  */
 
 import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
+export type KbType = "policy" | "biz";
 
 export interface HotQuestion {
   id: "q1" | "q2" | "q3";
@@ -20,14 +22,15 @@ export interface HotQuestion {
 
 const HOT_IDS: ReadonlyArray<"q1" | "q2" | "q3"> = ["q1", "q2", "q3"] as const;
 
-let cache: HotQuestion[] | null = null;
+const cache: Partial<Record<KbType, HotQuestion[]>> = {};
 
 /**
  * 测试专用：重置 module-scope cache。
  * 生产代码不应调用此函数。
  */
 export function __resetHotCacheForTest() {
-  cache = null;
+  delete cache.policy;
+  delete cache.biz;
 }
 
 /**
@@ -66,8 +69,8 @@ function parseFrontmatter(md: string): { fm: Record<string, string | string[]>; 
   return { fm, body };
 }
 
-async function loadOne(id: "q1" | "q2" | "q3"): Promise<HotQuestion> {
-  const filePath = path.join(process.cwd(), "content", "qa-hot", `${id}.md`);
+async function loadOne(kbType: KbType, id: "q1" | "q2" | "q3"): Promise<HotQuestion> {
+  const filePath = path.join(process.cwd(), "content", "qa-hot", kbType, `${id}.md`);
   const md = await readFile(filePath, "utf8");
   const { fm, body } = parseFrontmatter(md);
   const title = typeof fm.title === "string" ? fm.title : id;
@@ -77,12 +80,13 @@ async function loadOne(id: "q1" | "q2" | "q3"): Promise<HotQuestion> {
 }
 
 /**
- * 返回 3 个热点问题，按 q1/q2/q3 顺序。
- * 第二次调用走 module-scope cache，不再读文件（进程重启失效）。
+ * 返回指定知识库的 3 个热点问题，按 q1/q2/q3 顺序。
+ * 第二次调用走 module-scope cache（按 kbType 分桶），不再读文件（进程重启失效）。
  */
-export async function getHotQuestions(): Promise<HotQuestion[]> {
-  if (cache) return cache;
-  const items = await Promise.all(HOT_IDS.map(loadOne));
-  cache = items;
+export async function getHotQuestions(kbType: KbType): Promise<HotQuestion[]> {
+  const hit = cache[kbType];
+  if (hit) return hit;
+  const items = await Promise.all(HOT_IDS.map((id) => loadOne(kbType, id)));
+  cache[kbType] = items;
   return items;
 }
