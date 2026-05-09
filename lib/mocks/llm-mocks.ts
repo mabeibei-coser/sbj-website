@@ -44,17 +44,51 @@ interface Fixture {
 }
 
 const MOCK_FIXTURES: Record<string, Fixture[]> = {
-  // 示例: QA 模块的兜底 mock (Phase 2 会用更多)
+  // ── qa.answer mock：三档 fixture（hit / partial / miss）──────────────────────
+  // Phase 2 e2e：e2e/qa-citizen.spec.ts 优先用 page.route() 拦截，
+  // 这里的 fixture 供单元测试（tests/qa/answer.test.ts）+ LLM eval mock 模式使用。
   "qa.answer": [
+    // hit 档（失业保险金问题）— promptHash 通配（无 hash 时首条兜底）
     {
       response: {
         content: JSON.stringify({
-          answer: "[mock] 您可前往黄浦区社保局 (中山南一路 555 号) 办理就业失业登记证。",
-          citations: ["[mock] https://example.gov.cn/policy/1"],
-          disclaimer: "本回答由 AI 生成，仅供参考；具体以现场窗口告知为准。",
+          status: "hit",
+          answer:
+            "失业人员每月领取失业保险金的标准为最低工资的 80%[1]。\n\n*以上信息仅供参考。最终请以官方窗口/政府官网最新公告为准。咨询请拨打 63011095。*",
+          citations: ["/wiki/policy/unemployment-insurance"],
+        }),
+        tokensIn: 120,
+        tokensOut: 60,
+      },
+    },
+  ],
+  // miss 档（通用无关问题）— 供单元测试按 promptHash 指定
+  "qa.answer.mock.miss": [
+    {
+      response: {
+        content: JSON.stringify({
+          status: "miss",
+          answer:
+            "未在本系统知识库中匹配到相关政策。\n建议联系黄浦区社保局窗口确认：\n- 地址：上海市黄浦区中山南一路 555 号\n- 电话：63011095\n- 办事大厅：周一至周五 9:00-17:00",
+          citations: [],
+        }),
+        tokensIn: 80,
+        tokensOut: 40,
+      },
+    },
+  ],
+  // partial 档（有检索结果但引用过滤后为空）— 供单元测试
+  "qa.answer.mock.partial": [
+    {
+      response: {
+        content: JSON.stringify({
+          status: "partial",
+          answer:
+            "根据黄浦区相关政策，该项补贴有申请条件，建议您携带材料前往窗口确认最新要求。\n\n*以上信息仅供参考。最终请以官方窗口/政府官网最新公告为准。咨询请拨打 63011095。*",
+          citations: [],
         }),
         tokensIn: 100,
-        tokensOut: 50,
+        tokensOut: 55,
       },
     },
   ],
