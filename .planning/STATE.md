@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-09T02:03:24.241Z"
+last_updated: "2026-05-09T02:18:51.915Z"
 progress:
   total_phases: 9
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_plans: 4
+  percent: 57
 ---
 
 # STATE — sbj-website
@@ -20,8 +20,8 @@ progress:
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）Wave 2 进行中
-**Status:** EXECUTING — 7 plans / 5 waves，**Wave 2 Plan 02-02 qa-foundation PASS**：三层防护（sanitizer D-13 + pg_trgm 检索 D-08/09 + citations 白名单 D-12）+ 两次显式 callLlm（qa.answer / qa.answer.retry）+ POST /api/qa/answer 完整编排；35 新增测试全过，总计 67 单测通过。02-03 hot-questions 可与 02-02 并行或顺序启动。
+**Phase:** Phase 2 — 政策问答（W2）Wave 3 进行中
+**Status:** EXECUTING — 7 plans / 5 waves，**Wave 3 Plan 02-04 citizen-ui PASS**：globals.css v2（蓝白 cinematic DESIGN.md v2，643 行）+ 6 shadcn 组件（Radix-based）+ /qa 主页（hero + 双 Tab + 3 热点 cards + 自由问三档 + wiki 列表）+ /qa/wiki/[kbType]/[slug] 详情页；npm run build exit 0 / 71 unit tests pass / DESIGN.md §9 0 触犯。Wave 3 02-05 admin-wiki-editor 可启动。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -80,6 +80,16 @@ progress:
   - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
   - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
   - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
+- [x] **Phase 2 Wave 3 — Plan 02-04 citizen-ui** — 2026-05-09
+  - 2 commits：a90c930（Task 1: globals.css v2 + 6 shadcn ui 组件 + lib/utils.ts）+ c0ab0da（Task 2+3: /qa 主页 + wiki 详情页）
+  - **globals.css**：643 行 DESIGN.md v2 全量（tokens 31/glass-card 2/report-17/aurora 4/spotlight+hero-grid 6）+ sbj-website semantic tokens overrides
+  - **6 shadcn 组件**：button/card/input/label/scroll-area/badge（标准 Radix-based，非 career-report @base-ui）
+  - **/qa 主页**：hero 左对齐 + QaTabs（client, URL 同步）+ HotCards（server, details card + react-markdown）+ WikiList（server, Prisma kbType 筛选）+ FreeAsk（client, 三档结果渲染）
+  - **wiki 详情页**：/qa/wiki/[kbType]/[slug]，parseKb enum gate + getWikiPageBySlug + ReactMarkdown + QA_DISCLAIMER
+  - **DESIGN.md §9 合规**：emoji 0 / purple|fuchsia 0 / text-center(hero) 0 / Inter 0 / pill 0
+  - **测试**：71 单测全过（无回归）/ typecheck exit 0 / build exit 0
+  - **偏差**：@base-ui → @radix-ui 标准 shadcn / prose CSS 自写 / semantic tokens 补全
+  - 详见：`.planning/phases/02-policy-qa/02-04-SUMMARY.md`
 - [x] **Phase 2 Wave 2 — Plan 02-02 qa-foundation** — 2026-05-09
   - 1 atomic commit：3c361b1（15 files, 931 insertions）
   - **三层防护**：sanitizer（detectPromptInjection 6 patterns）+ retrieve（pg_trgm word_similarity + ILIKE 降级）+ citations（gov.cn + /wiki/policy|biz regex 白名单）
@@ -179,6 +189,8 @@ progress:
 | Phase 2 开发数据库方案 | Lighthouse 自建 Postgres 14 + sbj_dev 库 + SSH tunnel | CDB 最低规格 ~50 元/月，但 Lighthouse 现成且已装 PG14；建独立 sbj_dev 与 sbj_prod 隔离避免开发污染生产；UAT 阶段再升级真 CDB |
 | 检索阈值判定符号（02-02） | `<= RETRIEVAL_THRESHOLD` 而非 `<` | score 等于阈值（0.1）时不应触发 LLM 调用；`<` 会放行 score=0.1，`<=` 才符合 plan behavior |
 | 两次 callLlm 显式 caller（02-02） | answer.ts 显式发两次 callLlm（qa.answer + qa.answer.retry） | 避免 lib/llm-client.ts 内部 validator 复用同 caller，运营可按 caller 精确检索"被重试的调用" |
+| shadcn 组件实现（02-04） | 标准 Radix-based shadcn（非 career-report @base-ui） | career-report 用 @base-ui/react，sbj-website 不装此包；@radix-ui 标准实现 API 兼容且无需额外配置 |
+| prose CSS（02-04） | globals.css 自写简版 .prose（非 @tailwindcss/typography） | Tailwind v4 typography plugin 装配复杂；60 行自写 CSS 满足 react-markdown 渲染，避免引入新依赖 |
 
 ## Phase Transitions
 
@@ -190,7 +202,8 @@ progress:
 | 2026-05-09 | Phase 2 plan | Phase 2 **Wave 1 ready** | npm install + prisma generate + .env.local 完成（DeepSeek + 讯飞配齐） / 32 单测 PASS |
 | 2026-05-09 | Wave 1 ready | Wave 1 PASS | Plan 02-01 wiki-compile 完成（2 commits a063b7b + b651755）；smoke + dry-run + publish 三档全通；WikiPage 写库链路验证；Wave 2 ready |
 | 2026-05-09 | Wave 2 started | Wave 2 Plan 02-02 PASS | Plan 02-02 qa-foundation 完成（commit 3c361b1）；三层防护 + answer API + 67 单测 PASS；Wave 2 02-03 hot-questions ready |
+| 2026-05-09 | Wave 3 started | Wave 3 Plan 02-04 PASS | Plan 02-04 citizen-ui 完成（commits a90c930 + c0ab0da）；globals.css v2 + 6 shadcn 组件 + /qa 主页 + wiki 详情页；71 单测 PASS；Wave 3 02-05 admin-wiki-editor ready |
 
 ---
 
-*Last updated: 2026-05-09 — Phase 2 Wave 2 Plan 02-02 (qa-foundation) PASS：三层防护 + POST /api/qa/answer + 两次显式 callLlm（qa.answer / qa.answer.retry）+ 67 单测 PASS，1 atomic commit 3c361b1*
+*Last updated: 2026-05-09 — Phase 2 Wave 3 Plan 02-04 (citizen-ui) PASS：globals.css v2（DESIGN.md）+ 6 shadcn 组件 + /qa 双页签 + 热点 + 自由问三档 + wiki 详情页，71 单测 PASS，build exit 0*

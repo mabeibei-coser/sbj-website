@@ -78,13 +78,13 @@
 3. 自由问命中 wiki 时给出真实引用 + 1000 字内 + 免责声明；未命中时给兜底转窗口文案
 4. LLM eval suite 50 题 golden Q&A 准确率 ≥ 80% + 出处校验通过率 ≥ 80%
 
-**Plans:** 3/7 plans executed
+**Plans:** 4/7 plans executed
 
 Plans:
 - [x] 02-01-wiki-compile-PLAN.md — Wiki 编译 CLI + Prisma 写库 + audit（QA-02 / QA-03 / QA-09）— 2026-05-09 PASS（commits a063b7b + b651755）
 - [x] 02-02-qa-foundation-PLAN.md — QA 三层防护 + 自由问 API + 4 测试套件（QA-04 / QA-05 / QA-06 / QA-07）
 - [x] 02-03-hot-questions-PLAN.md — 3 热点 .md + GET /api/qa/hot（QA-08 / QA-10）
-- [ ] 02-04-citizen-ui-PLAN.md — globals.css + shadcn ui + /qa 页面 + wiki 详情（QA-01 / QA-04 / QA-05 / QA-08 / FE-01 / FE-03）
+- [x] 02-04-citizen-ui-PLAN.md — globals.css + shadcn ui + /qa 页面 + wiki 详情（QA-01 / QA-04 / QA-05 / QA-08 / FE-01 / FE-03）
 - [ ] 02-05-admin-wiki-editor-PLAN.md — /admin/wiki 列表 + 编辑器 + PUT API（QA-12）
 - [ ] 02-06-llm-eval-PLAN.md — 50 题 golden Q&A + run.ts 阈值卡死 + USER OWN checkpoint（QA-11）
 - [ ] 02-07-e2e-PLAN.md — Playwright 市民 + admin e2e 全流程（QA-01 / QA-04~08 / QA-12）
