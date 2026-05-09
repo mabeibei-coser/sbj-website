@@ -6,7 +6,7 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     // E2E 用 Playwright (e2e/ 目录)，单元/集成在这里
-    exclude: ["node_modules/**", ".next/**", "e2e/**", "tests/llm-eval/**"],
+    exclude: ["node_modules/**", ".next/**", "e2e/**"],
     setupFiles: ["tests/setup.ts"],
   },
   resolve: {

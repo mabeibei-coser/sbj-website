@@ -1,80 +1,206 @@
 /**
- * LLM eval suite skeleton (T11 / INF-12)
+ * LLM eval suite (Phase 2 / QA-11)
  *
- * Phase 1 仅搭框架 + 1 个 sample。Phase 2 政策问答要做到:
- *   - 50 题 golden Q&A (来自甲方政策文档抽题 + HR 经验题)
- *   - 准确率 ≥ 80% (语义相似 / 关键词覆盖)
- *   - 出处校验通过率 ≥ 80% (返回的引用链接全部命中白名单 regex)
+ * 50 题 golden Q&A，验证：
+ *   - accuracy ≥ 80%（expectedKeywords 全部命中）
+ *   - citationRate ≥ 80%（expectedSourceSlug 命中 result.citations 之一）
  *
- * 当前 (Phase 1):
- *   - 1 道 sample 题验证 pipeline 跑得通
- *   - 不调真 API (走 lib/mocks/llm-mocks.ts) ，dry-run mode
- *   - 输出 JSON 报告: tests/llm-eval/results/<timestamp>.json
+ * 模式（D-19）：
+ *   - 默认 mock：getMockResponse(caller, hash) → 回归测试；CI 默认；不需要真 LLM key
+ *   - REAL_LLM=1：调 lib/qa/answer.ts 的 answerQuestion 端到端测；
+ *     需要 DATABASE_URL + 真 LLM key + 已 seed 的 WikiPage 数据
  *
- * 跑法: npm run test:llm-eval
+ * 跑法：
+ *   - npm run llm-eval        （mock）
+ *   - npm run llm-eval:real   （REAL_LLM=1，跑真 LLM）
  */
 
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { hashPrompt } from "../../lib/hash";
 import { getMockResponse } from "../../lib/mocks/llm-mocks";
 
-interface GoldenItem {
+const REAL_LLM = process.env.REAL_LLM === "1";
+const ACCURACY_THRESHOLD = 0.8;
+const CITATION_THRESHOLD = 0.8;
+const GOLDEN_PATH = path.join(__dirname, "golden-questions.json");
+
+export interface GoldenItem {
   id: string;
-  /** 业务面 caller (路由到对应 mock fixture) */
-  caller: string;
-  systemPrompt: string;
-  userPrompt: string;
-  /** 期望关键词，全部出现视作通过 */
+  kbType: "policy" | "biz";
+  question: string;
   expectedKeywords: string[];
-  /** 期望引用域名 (回链白名单)，至少命中一条视作通过 */
-  expectedCitationDomains?: string[];
+  expectedSourceSlug?: string;
+  expectedCitationDomains?: string[]; // 兼容 Phase 1
+  expectedStatus: "hit" | "partial" | "miss";
+  category?: string;
 }
 
 interface EvalResult {
   id: string;
-  caller: string;
+  category?: string;
+  kbType: string;
+  status: string;
   passKeywords: boolean;
   passCitations: boolean;
-  raw: string;
   missingKeywords: string[];
+  actualCitations: string[];
+  raw: string;
+  skipped?: boolean;
+  skipReason?: string;
 }
 
-const GOLDEN: GoldenItem[] = [
-  {
-    id: "qa-sample-1",
-    caller: "qa.answer",
-    systemPrompt: "你是黄浦区社保政策助理，回答必须基于知识库内容。",
-    userPrompt: "失业了怎么办失业登记？",
-    expectedKeywords: ["黄浦区社保局", "中山南一路 555 号"],
-    expectedCitationDomains: ["example.gov.cn"],
-  },
-];
+export async function loadGolden(): Promise<GoldenItem[]> {
+  const raw = await readFile(GOLDEN_PATH, "utf8");
+  return JSON.parse(raw) as GoldenItem[];
+}
+
+export function hasUserTodo(item: GoldenItem): boolean {
+  return (
+    item.question === "<USER TODO>" ||
+    item.expectedSourceSlug === "<USER TODO>" ||
+    (item.expectedKeywords?.length === 0 && item.category === "user_own")
+  );
+}
+
+export function checkKeywords(
+  text: string,
+  expected: string[]
+): { pass: boolean; missing: string[] } {
+  const missing = expected.filter((k) => !text.includes(k));
+  return { pass: missing.length === 0, missing };
+}
+
+export function checkCitations(citations: string[], item: GoldenItem): boolean {
+  // 1. 优先 expectedSourceSlug：检查 citations 中是否有任意一项含此 slug
+  if (item.expectedSourceSlug) {
+    return citations.some((c) => c.includes(item.expectedSourceSlug as string));
+  }
+  // 2. 兼容 Phase 1 expectedCitationDomains：任意 domain 命中即过
+  if (item.expectedCitationDomains && item.expectedCitationDomains.length > 0) {
+    return item.expectedCitationDomains.some((d) => citations.some((c) => c.includes(d)));
+  }
+  // 3. expectedStatus=miss 时不要求 citation 命中（miss 默认无 citation）
+  return item.expectedStatus === "miss";
+}
+
+async function runOneMock(item: GoldenItem): Promise<EvalResult> {
+  const caller = `qa.eval.${item.id}`;
+  const dummySystem = "you are a policy QA helper"; // mock 用 hash 路由，内容不影响
+  const dummyUser = item.question;
+  const promptHash = hashPrompt(dummySystem, dummyUser);
+  const mock = getMockResponse(caller, promptHash);
+
+  if (!mock) {
+    return {
+      id: item.id,
+      category: item.category,
+      kbType: item.kbType,
+      status: "skipped",
+      passKeywords: false,
+      passCitations: false,
+      missingKeywords: [],
+      actualCitations: [],
+      raw: "",
+      skipped: true,
+      skipReason: `no mock fixture (caller=${caller})`,
+    };
+  }
+
+  const raw = mock.content;
+  // mock content 可能是 plain text 或 JSON；尝试 parse
+  let answer = raw;
+  let citations: string[] = [];
+  try {
+    const parsed = JSON.parse(raw) as { answer?: string; citations?: string[] };
+    if (parsed.answer) answer = parsed.answer;
+    if (parsed.citations) citations = parsed.citations;
+  } catch {
+    // 非 JSON, 用整 raw 当 answer，citations 留空
+  }
+
+  const kw = checkKeywords(answer, item.expectedKeywords);
+  const passCt = checkCitations(citations, item);
+
+  return {
+    id: item.id,
+    category: item.category,
+    kbType: item.kbType,
+    status: "ok",
+    passKeywords: kw.pass,
+    passCitations: passCt,
+    missingKeywords: kw.missing,
+    actualCitations: citations,
+    raw,
+  };
+}
+
+async function runOneReal(item: GoldenItem): Promise<EvalResult> {
+  // 动态 import 避免 mock 模式也加载 server-only 模块
+  const { answerQuestion } = await import("../../lib/qa/answer");
+  const fakeReq = {
+    headers: { get: () => null },
+    nextUrl: { searchParams: new URLSearchParams() },
+  } as unknown as import("next/server").NextRequest;
+
+  let result: { status: string; answer: string; citations: string[] };
+  try {
+    result = await answerQuestion({ question: item.question, kbType: item.kbType }, fakeReq);
+  } catch (err) {
+    return {
+      id: item.id,
+      category: item.category,
+      kbType: item.kbType,
+      status: "error",
+      passKeywords: false,
+      passCitations: false,
+      missingKeywords: item.expectedKeywords,
+      actualCitations: [],
+      raw: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  const kw = checkKeywords(result.answer, item.expectedKeywords);
+  const passCt = checkCitations(result.citations, item);
+
+  // expectedStatus 校验：实际 status 必须等于期望
+  const statusMatch = result.status === item.expectedStatus;
+
+  return {
+    id: item.id,
+    category: item.category,
+    kbType: item.kbType,
+    status: result.status,
+    passKeywords: kw.pass && statusMatch,
+    passCitations: passCt,
+    missingKeywords: kw.missing,
+    actualCitations: result.citations,
+    raw: result.answer,
+  };
+}
 
 async function runEval(): Promise<EvalResult[]> {
+  const golden = await loadGolden();
   const results: EvalResult[] = [];
-  for (const item of GOLDEN) {
-    const promptHashValue = hashPrompt(item.systemPrompt, item.userPrompt);
-    const mock = getMockResponse(item.caller, promptHashValue);
-    if (!mock) {
-      console.warn(`[eval] ${item.id}: 无 mock fixture (caller=${item.caller})，skip`);
+  for (const item of golden) {
+    if (hasUserTodo(item)) {
+      results.push({
+        id: item.id,
+        category: item.category,
+        kbType: item.kbType,
+        status: "skipped",
+        passKeywords: false,
+        passCitations: false,
+        missingKeywords: [],
+        actualCitations: [],
+        raw: "",
+        skipped: true,
+        skipReason: "USER TODO not filled",
+      });
       continue;
     }
-    const raw = mock.content;
-    const missingKeywords = item.expectedKeywords.filter((k) => !raw.includes(k));
-    const passKeywords = missingKeywords.length === 0;
-    let passCitations = true;
-    if (item.expectedCitationDomains) {
-      passCitations = item.expectedCitationDomains.some((d) => raw.includes(d));
-    }
-    results.push({
-      id: item.id,
-      caller: item.caller,
-      passKeywords,
-      passCitations,
-      raw,
-      missingKeywords,
-    });
+    const r = REAL_LLM ? await runOneReal(item) : await runOneMock(item);
+    results.push(r);
   }
   return results;
 }
@@ -82,18 +208,26 @@ async function runEval(): Promise<EvalResult[]> {
 async function main(): Promise<void> {
   const results = await runEval();
   const total = results.length;
-  const passKw = results.filter((r) => r.passKeywords).length;
-  const passCt = results.filter((r) => r.passCitations).length;
-  const accuracy = total === 0 ? 0 : passKw / total;
-  const citationRate = total === 0 ? 0 : passCt / total;
+  const counted = results.filter((r) => !r.skipped);
+  const totalCounted = counted.length;
+  const passKw = counted.filter((r) => r.passKeywords).length;
+  const passCt = counted.filter((r) => r.passCitations).length;
+  const skipped = results.filter((r) => r.skipped).length;
+
+  const accuracy = totalCounted === 0 ? 0 : passKw / totalCounted;
+  const citationRate = totalCounted === 0 ? 0 : passCt / totalCounted;
 
   const report = {
     runAt: new Date().toISOString(),
+    mode: REAL_LLM ? "real" : "mock",
     total,
+    totalCounted,
+    skipped,
     passKeywords: passKw,
     passCitations: passCt,
     accuracy: Number(accuracy.toFixed(3)),
     citationRate: Number(citationRate.toFixed(3)),
+    thresholds: { accuracy: ACCURACY_THRESHOLD, citation: CITATION_THRESHOLD },
     results,
   };
 
@@ -103,15 +237,44 @@ async function main(): Promise<void> {
   await writeFile(file, JSON.stringify(report, null, 2), "utf8");
 
   console.log("--- LLM eval report ---");
-  console.log(`Total: ${total}`);
-  console.log(`Accuracy (keywords): ${(accuracy * 100).toFixed(1)}%`);
-  console.log(`Citation pass rate:  ${(citationRate * 100).toFixed(1)}%`);
+  console.log(`Mode: ${REAL_LLM ? "real" : "mock"}`);
+  console.log(`Total: ${total} (counted: ${totalCounted}, skipped: ${skipped})`);
+  console.log(
+    `Accuracy (keywords): ${(accuracy * 100).toFixed(1)}% (threshold ${(ACCURACY_THRESHOLD * 100).toFixed(0)}%)`
+  );
+  console.log(
+    `Citation pass rate:  ${(citationRate * 100).toFixed(1)}% (threshold ${(CITATION_THRESHOLD * 100).toFixed(0)}%)`
+  );
   console.log(`Saved: ${file}`);
 
-  // Phase 1 没有 ≥80% 阈值；Phase 2 的版本会在低于阈值时 process.exit(1)
-  if (total === 0) {
-    console.warn("[eval] 0 题跑通，请检查 lib/mocks/llm-mocks.ts 的 fixture 配置");
+  // 打印失败用例详情
+  const failed = counted.filter((r) => !r.passKeywords || !r.passCitations);
+  if (failed.length > 0) {
+    console.log("\n--- Failed cases ---");
+    for (const f of failed) {
+      console.log(`[${f.id}] (${f.category ?? "?"}, ${f.kbType}, status=${f.status})`);
+      if (!f.passKeywords)
+        console.log(`  missing keywords: ${JSON.stringify(f.missingKeywords)}`);
+      if (!f.passCitations)
+        console.log(`  citation failed (got: ${JSON.stringify(f.actualCitations)})`);
+      console.log(`  raw: ${f.raw.slice(0, 200)}...`);
+    }
   }
+
+  // 打印 skipped
+  if (skipped > 0) {
+    console.warn(`\n[eval] ${skipped} items skipped (USER TODO 占位题或 mock fixture 缺失)`);
+  }
+
+  // 阈值卡死（D-19）
+  if (accuracy < ACCURACY_THRESHOLD || citationRate < CITATION_THRESHOLD) {
+    console.error(
+      `\n FAILED — 准确率 ${(accuracy * 100).toFixed(1)}% 或出处 ${(citationRate * 100).toFixed(1)}% 低于阈值 ${(ACCURACY_THRESHOLD * 100).toFixed(0)}%`
+    );
+    process.exit(1);
+  }
+
+  console.log("\n PASSED");
 }
 
 main().catch((err) => {
