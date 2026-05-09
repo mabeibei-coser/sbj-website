@@ -71,7 +71,10 @@ function parseFrontmatter(md: string): { fm: Record<string, string | string[]>; 
 
 async function loadOne(kbType: KbType, id: "q1" | "q2" | "q3"): Promise<HotQuestion> {
   const filePath = path.join(process.cwd(), "content", "qa-hot", kbType, `${id}.md`);
-  const md = await readFile(filePath, "utf8");
+  const raw = await readFile(filePath, "utf8");
+  // 标准化换行符：Windows checkout 时 git 会把 LF 转成 CRLF，
+  // parseFrontmatter 的 regex 只识别 LF，提前规整一次。
+  const md = raw.replace(/\r\n/g, "\n");
   const { fm, body } = parseFrontmatter(md);
   const title = typeof fm.title === "string" ? fm.title : id;
   const updatedAt = typeof fm.updated === "string" ? fm.updated : "";
