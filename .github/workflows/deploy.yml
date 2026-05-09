@@ -39,7 +39,36 @@ jobs:
           port: ${{ secrets.TENCENT_PORT || 22 }}
           script: |
             set -e
-            cd "${{ secrets.TENCENT_DEPLOY_PATH }}"
+
+            echo "==> 查找代码路径"
+            DEPLOY_PATH="${{ secrets.TENCENT_DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_PATH" ] || [ ! -d "$DEPLOY_PATH" ]; then
+              echo "  TENCENT_DEPLOY_PATH 未配置或不存在，尝试自动发现..."
+              # 优先从 pm2 进程拿 cwd
+              if command -v pm2 >/dev/null 2>&1; then
+                PM2_CWD=$(pm2 jlist 2>/dev/null | sed -n 's/.*"name":"sbj-website"[^}]*"pm_cwd":"\([^"]*\)".*/\1/p' | head -1)
+                if [ -n "$PM2_CWD" ] && [ -d "$PM2_CWD" ]; then
+                  DEPLOY_PATH="$PM2_CWD"
+                  echo "  从 pm2 找到: $DEPLOY_PATH"
+                fi
+              fi
+              # 还没找到就搜常见路径
+              if [ -z "$DEPLOY_PATH" ] || [ ! -d "$DEPLOY_PATH" ]; then
+                for c in /home/*/sbj-website /root/sbj-website /var/www/sbj-website /opt/sbj-website /www/wwwroot/sbj-website; do
+                  if [ -d "$c" ] && [ -f "$c/package.json" ]; then
+                    DEPLOY_PATH="$c"
+                    echo "  搜到: $DEPLOY_PATH"
+                    break
+                  fi
+                done
+              fi
+            fi
+            if [ -z "$DEPLOY_PATH" ] || [ ! -d "$DEPLOY_PATH" ]; then
+              echo "ERROR: 找不到 sbj-website 代码目录，请检查 TENCENT_DEPLOY_PATH 或服务器上是否已 clone"
+              exit 1
+            fi
+            echo "  使用路径: $DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
 
             echo "==> git pull"
             git pull --ff-only
@@ -57,4 +86,4 @@ jobs:
             echo "==> pm2 restart"
             pm2 restart sbj-website || pm2 start ecosystem.config.js
 
-            echo "==> done"
+            echo "==> done at $DEPLOY_PATH"
