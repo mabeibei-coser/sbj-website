@@ -23,7 +23,15 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
   }
 
   return (
-    <div className="glass-card border border-[var(--border)]">
+    <div
+      className="glass-card"
+      style={{
+        border: "1px solid var(--border)",
+        borderRadius: "12px",
+        background: "var(--card)",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)",
+      }}
+    >
       <div
         role="button"
         tabIndex={0}
@@ -35,18 +43,29 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
           }
         }}
         aria-expanded={open}
-        className="cursor-pointer px-6 py-4"
-        style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "1rem" }}
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: "1rem",
+          padding: "1rem 1.5rem",
+          cursor: "pointer",
+        }}
       >
         {/* 序号 */}
         <span
-          className="shrink-0 rounded-full bg-[var(--blue-100)] text-[var(--blue-700)] text-[11px] font-medium tabular-nums"
+          className="tabular-nums"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             width: "1.5rem",
             height: "1.5rem",
+            borderRadius: "9999px",
+            background: "var(--blue-100)",
+            color: "var(--blue-700)",
+            fontSize: "11px",
+            fontWeight: 500,
             fontFamily: "var(--font-mono)",
             flexShrink: 0,
           }}
@@ -54,18 +73,25 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
           {index + 1}
         </span>
         <h3
-          className="text-[15px] font-medium text-[var(--text-primary)] leading-snug"
-          style={{ flex: 1, margin: 0 }}
+          style={{
+            flex: 1,
+            margin: 0,
+            fontSize: "15px",
+            fontWeight: 500,
+            color: "var(--text-primary)",
+            lineHeight: 1.4,
+          }}
         >
           {title}
         </h3>
         {/* chevron indicator */}
         <span
-          className="text-[var(--text-muted)]"
           style={{
             flexShrink: 0,
+            color: "var(--text-muted)",
             transition: "transform 200ms",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            display: "inline-flex",
           }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
