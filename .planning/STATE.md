@@ -8,7 +8,7 @@ progress:
   total_phases: 9
   completed_phases: 0
   total_plans: 7
-  completed_plans: 4
+  completed_plans: 5
   percent: 57
 ---
 
@@ -20,8 +20,8 @@ progress:
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）Wave 3 进行中
-**Status:** EXECUTING — 7 plans / 5 waves，**Wave 3 Plan 02-04 citizen-ui PASS**：globals.css v2（蓝白 cinematic DESIGN.md v2，643 行）+ 6 shadcn 组件（Radix-based）+ /qa 主页（hero + 双 Tab + 3 热点 cards + 自由问三档 + wiki 列表）+ /qa/wiki/[kbType]/[slug] 详情页；npm run build exit 0 / 71 unit tests pass / DESIGN.md §9 0 触犯。Wave 3 02-05 admin-wiki-editor 可启动。
+**Phase:** Phase 2 — 政策问答（W2）Wave 3 完成
+**Status:** EXECUTING — 7 plans / 5 waves，**Wave 3 PASS**（02-04 + 02-05 均完成）：02-05 admin-wiki-editor：updateWikiContent 事务实现 + GET/PUT API + 列表/编辑 wrapper/client split-view editor；74 unit tests PASS / build exit 0。Wave 4 02-06 llm-eval 可启动。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -80,6 +80,15 @@ progress:
   - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
   - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
   - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
+- [x] **Phase 2 Wave 3 — Plan 02-05 admin-wiki-editor** — 2026-05-09
+  - 3 commits：ac83087（Task 1: updateWikiContent 事务 + 3 TDD tests）+ 1f70acb（Task 2: GET /api/admin/wiki + PUT /api/admin/wiki/[id]）+ 8f9041b（Task 3: 列表页 + 编辑页 wrapper + client split-view editor）
+  - **updateWikiContent**：prisma.$transaction（findUnique → update version+1 → wikiPageVersion.create）+ 事务外 logAudit（actor=admin:editorId, action=wiki.update, before/after version）
+  - **API**：GET 支持 kbType/q 筛选；PUT Zod 校验 + getAdminSession 取 editorId + 404/400/500 齐全
+  - **UI**：list 页（server, segmented kb 筛 + title 搜 + table）+ 编辑页 wrapper（server, getWikiPage + notFound）+ client editor（textarea + ReactMarkdown split-view + PUT onSave + version 状态刷新）
+  - **TDD**：RED（3 it FAIL）→ GREEN（3 it PASS）→ REFACTOR（typecheck exit 0）gate 全留痕
+  - **STRIDE**：T-02-16 accept（audit 留痕，RBAC Phase 4）/ T-02-17~20 全 mitigate
+  - **测试**：74 单测全过（+3 wiki-update）/ typecheck exit 0 / build exit 0
+  - 详见：`.planning/phases/02-policy-qa/02-05-SUMMARY.md`
 - [x] **Phase 2 Wave 3 — Plan 02-04 citizen-ui** — 2026-05-09
   - 2 commits：a90c930（Task 1: globals.css v2 + 6 shadcn ui 组件 + lib/utils.ts）+ c0ab0da（Task 2+3: /qa 主页 + wiki 详情页）
   - **globals.css**：643 行 DESIGN.md v2 全量（tokens 31/glass-card 2/report-17/aurora 4/spotlight+hero-grid 6）+ sbj-website semantic tokens overrides
@@ -203,7 +212,8 @@ progress:
 | 2026-05-09 | Wave 1 ready | Wave 1 PASS | Plan 02-01 wiki-compile 完成（2 commits a063b7b + b651755）；smoke + dry-run + publish 三档全通；WikiPage 写库链路验证；Wave 2 ready |
 | 2026-05-09 | Wave 2 started | Wave 2 Plan 02-02 PASS | Plan 02-02 qa-foundation 完成（commit 3c361b1）；三层防护 + answer API + 67 单测 PASS；Wave 2 02-03 hot-questions ready |
 | 2026-05-09 | Wave 3 started | Wave 3 Plan 02-04 PASS | Plan 02-04 citizen-ui 完成（commits a90c930 + c0ab0da）；globals.css v2 + 6 shadcn 组件 + /qa 主页 + wiki 详情页；71 单测 PASS；Wave 3 02-05 admin-wiki-editor ready |
+| 2026-05-09 | Wave 3 02-05 started | Wave 3 PASS | Plan 02-05 admin-wiki-editor 完成（commits ac83087 + 1f70acb + 8f9041b）；updateWikiContent 事务 + GET/PUT API + 3 UI 件；74 单测 PASS；Wave 4 02-06 llm-eval ready |
 
 ---
 
-*Last updated: 2026-05-09 — Phase 2 Wave 3 Plan 02-04 (citizen-ui) PASS：globals.css v2（DESIGN.md）+ 6 shadcn 组件 + /qa 双页签 + 热点 + 自由问三档 + wiki 详情页，71 单测 PASS，build exit 0*
+*Last updated: 2026-05-09 — Phase 2 Wave 3 PASS：Plan 02-05 (admin-wiki-editor) PASS — updateWikiContent 事务 + GET/PUT API + 列表/编辑 UI，74 单测 PASS，build exit 0；QA-12 完成；Wave 4 (02-06 llm-eval) ready*
