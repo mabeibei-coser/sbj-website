@@ -25,7 +25,7 @@ export function QaTabs({ active }: QaTabsProps) {
   }
 
   return (
-    <div role="tablist" aria-label="知识库切换" className="flex gap-2 border-b border-[var(--border)]">
+    <div role="tablist" aria-label="知识库切换" className="flex gap-2 border-b border-[var(--border)] overflow-x-auto scrollbar-none">
       {TABS.map((tab) => {
         const isActive = active === tab.id;
         return (
@@ -35,7 +35,7 @@ export function QaTabs({ active }: QaTabsProps) {
             aria-selected={isActive}
             onClick={() => setKb(tab.id)}
             className={cn(
-              "px-6 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
+              "shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
               isActive
                 ? "border-[var(--blue-500)] text-[var(--blue-700)]"
                 : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"

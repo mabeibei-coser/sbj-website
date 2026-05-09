@@ -20,10 +20,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* loli.net 是 Google Fonts 国内镜像，避免 fonts.googleapis.com 在大陆被墙 */}
+        <link rel="preconnect" href="https://fonts.loli.net" />
+        <link rel="preconnect" href="https://gstatic.loli.net" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.loli.net/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

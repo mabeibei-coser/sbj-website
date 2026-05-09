@@ -11,6 +11,17 @@
   html {
     font-family: var(--font-sans);
   }
+
+  /* Remove browser-default disclosure triangle from <details>/<summary> */
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary::marker {
+    display: none;
+  }
 }
 
 :root {
