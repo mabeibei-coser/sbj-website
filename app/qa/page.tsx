@@ -19,16 +19,26 @@ export default async function QaPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-[var(--background)]">
       {/* Hero (短型，左对齐) */}
-      <section className="relative border-b border-[var(--border)] bg-gradient-to-b from-[var(--blue-50)] to-transparent">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="text-xs text-[var(--blue-500)] uppercase tracking-wider mb-2">
+      <section className="relative border-b border-[var(--border)] overflow-hidden">
+        {/* 背景：蓝白渐变 + 极细网格 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--blue-50)] via-[var(--blue-50)] to-transparent" />
+        <div className="absolute inset-0 hero-grid opacity-40" />
+        <div className="relative max-w-5xl mx-auto px-6 py-[88px]">
+          {/* Eyebrow — mono uppercase */}
+          <div
+            className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--blue-500)] mb-4"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
             上海黄浦区社保局 · 智能政策助理
           </div>
-          <h1 className="text-3xl md:text-4xl font-semibold text-[var(--text-primary)]">
+          <h1
+            className="text-4xl md:text-5xl font-semibold text-[var(--text-primary)] leading-tight"
+            style={{ letterSpacing: "-0.04em" }}
+          >
             政策问答
           </h1>
-          <p className="text-base text-[var(--text-muted)] mt-3 max-w-2xl">
-            双库切换查询黄浦区就业、创业相关政策；3 个常见热点一键展开；其他问题用自由问，命中知识库时给出真实引用与免责声明。
+          <p className="text-[15px] text-[var(--text-muted)] mt-4 max-w-xl leading-relaxed">
+            查询黄浦区就业、创业政策；命中知识库时给出真实引用与免责声明。
           </p>
         </div>
       </section>
