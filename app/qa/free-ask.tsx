@@ -59,11 +59,23 @@ export function FreeAsk({ kbType }: FreeAskProps) {
   }
 
   return (
-    <section aria-label="自由问" className="glass-card p-6 space-y-4">
+    <section aria-label="自由问" className="glass-card border border-[var(--border)] p-6 space-y-4">
       <div>
-        <h2 className="text-lg font-medium">自由问</h2>
-        <p className="text-xs text-[var(--text-muted)] mt-1">
-          输入您的问题，命中知识库时给出真实引用 + 1000 字内 + 免责声明；未命中时建议联系窗口。
+        {/* Section eyebrow */}
+        <div
+          className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--text-muted)] mb-2"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          智能问答
+        </div>
+        <h2
+          className="text-2xl font-semibold text-[var(--text-primary)]"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          自由问
+        </h2>
+        <p className="text-[13px] text-[var(--text-muted)] mt-1.5">
+          命中知识库时给出真实引用与免责声明；未命中时建议联系窗口。
         </p>
       </div>
 
@@ -90,7 +102,7 @@ export function FreeAsk({ kbType }: FreeAskProps) {
             className="px-5 py-2 bg-[var(--blue-500)] text-white text-sm rounded-md font-medium disabled:opacity-50 hover:bg-[var(--blue-600)] transition-colors flex items-center gap-2"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {submitting ? "查询中..." : "提交"}
+            {submitting ? "查询中..." : "查询"}
           </button>
         </div>
       </form>
