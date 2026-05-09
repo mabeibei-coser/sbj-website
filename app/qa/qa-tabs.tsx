@@ -35,7 +35,7 @@ export function QaTabs({ active }: QaTabsProps) {
             aria-selected={isActive}
             onClick={() => setKb(tab.id)}
             className={cn(
-              "shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
+              "shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px bg-transparent rounded-none appearance-none outline-none",
               isActive
                 ? "border-[var(--blue-500)] text-[var(--blue-700)]"
                 : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
