@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-09T02:18:51.915Z"
+last_updated: "2026-05-09T02:43:52.611Z"
 progress:
   total_phases: 9
   completed_phases: 0
   total_plans: 7
-  completed_plans: 5
-  percent: 57
+  completed_plans: 6
+  percent: 86
 ---
 
 # STATE — sbj-website
@@ -20,8 +20,8 @@ progress:
 
 ## Current State
 
-**Phase:** Phase 2 — 政策问答（W2）Wave 3 完成
-**Status:** EXECUTING — 7 plans / 5 waves，**Wave 3 PASS**（02-04 + 02-05 均完成）：02-05 admin-wiki-editor：updateWikiContent 事务实现 + GET/PUT API + 列表/编辑 wrapper/client split-view editor；74 unit tests PASS / build exit 0。Wave 4 02-06 llm-eval 可启动。
+**Phase:** Phase 2 — 政策问答（W2）Wave 4 进行中
+**Status:** CHECKPOINT — 02-06 llm-eval Tasks 1+2 完成，Task3 需用户审校 USER_OWN_GOLDEN_QUESTIONS.md 后继续：50题 golden JSON + 30 mock fixtures + run.ts mock/real双模式 + 阈值80%卡死；83 unit tests PASS / typecheck exit 0 / npm run llm-eval PASSED。
 **Last Updated:** 2026-05-09
 
 ## 生产 URL（甲方已分配）
@@ -80,6 +80,12 @@ progress:
   - SSH tunnel 模式：`ssh -i ~/.ssh/tencent_key -N -L 5432:localhost:5432 root@124.222.114.47`（本地开发期间常驻）
   - `npx prisma migrate deploy` 在 sbj_dev 上应用 init migration，9 表全建好
   - 链路验证：本地 Prisma Client → tunnel → Lighthouse Postgres，wikiPage/auditLog/citizenProfile/consentRecord count 都返回 0 ✓
+- [~] **Phase 2 Wave 4 — Plan 02-06 llm-eval** — 2026-05-09 [CHECKPOINT]
+  - Task1 commit 40089f0：50题 golden-questions.json（5hot+10detail+5fab+5inj+5unrel+20user_own）+ 30 mock fixtures + USER_OWN_GOLDEN_QUESTIONS.md 填空指引 + results/.gitkeep
+  - Task2 commit 83842d2：TDD RED→GREEN→REFACTOR（run.test.ts 9 tests）+ run.ts mock/real双模式 + ACCURACY_THRESHOLD=0.8 卡死 + vitest.config更新
+  - **mock模式 PASSED**：totalCounted=30（skip 20题USER TODO），accuracy 100%，citationRate 100%
+  - **等待用户**：Task3 checkpoint → 审校 USER_OWN_GOLDEN_QUESTIONS.md，填 20 题到 golden-questions.json
+  - 详见：`.planning/phases/02-policy-qa/02-06-SUMMARY.md`
 - [x] **Phase 2 Wave 3 — Plan 02-05 admin-wiki-editor** — 2026-05-09
   - 3 commits：ac83087（Task 1: updateWikiContent 事务 + 3 TDD tests）+ 1f70acb（Task 2: GET /api/admin/wiki + PUT /api/admin/wiki/[id]）+ 8f9041b（Task 3: 列表页 + 编辑页 wrapper + client split-view editor）
   - **updateWikiContent**：prisma.$transaction（findUnique → update version+1 → wikiPageVersion.create）+ 事务外 logAudit（actor=admin:editorId, action=wiki.update, before/after version）
