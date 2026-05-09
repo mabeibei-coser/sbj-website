@@ -652,3 +652,11 @@ body {
 .prose-zinc {
   color: oklch(0.3 0.02 250);
 }
+
+/* QA hot card hover (桌面端 hover 反馈；移动端无 hover 状态，避免 stuck inline style) */
+@media (hover: hover) {
+  .qa-hot-card:hover {
+    border-color: #2563eb !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+  }
+}

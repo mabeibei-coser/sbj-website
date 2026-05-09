@@ -127,7 +127,7 @@ export function QaSearchBox({
               border: "none",
               outline: "none",
               background: "transparent",
-              fontSize: isHero ? "16px" : "15px",
+              fontSize: "16px", /* 必须 ≥ 16px，否则 iOS Safari focus 时会自动 zoom */
               fontFamily: "inherit",
               color: "#0f172a",
               padding: "0.5rem 0",
@@ -151,8 +151,12 @@ export function QaSearchBox({
               fontWeight: 500,
               borderRadius: "8px",
               border: "none",
+              appearance: "none",
+              WebkitAppearance: "none",
               cursor: canSubmit ? "pointer" : "not-allowed",
               transition: "background 150ms",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
             }}
           >
             {pending ? (
@@ -210,9 +214,13 @@ export function QaSearchBox({
                 fontWeight: 500,
                 border: active ? "1px solid #2563eb" : "1px solid #cbd5e1",
                 borderRadius: "8px",
+                appearance: "none",
+                WebkitAppearance: "none",
                 cursor: "pointer",
                 fontFamily: "inherit",
                 transition: "background 150ms, color 150ms, border-color 150ms",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "transparent",
               }}
             >
               <Icon style={{ width: "14px", height: "14px" }} />
@@ -238,28 +246,25 @@ export function QaSearchBox({
               key={hot.id}
               type="button"
               onClick={() => setQuestion(hot.title)}
+              className="qa-hot-card"
               style={{
                 textAlign: "left",
                 padding: "1rem",
                 background: "#ffffff",
                 border: "1px solid #e2e8f0",
                 borderRadius: "10px",
+                appearance: "none",
+                WebkitAppearance: "none",
                 cursor: "pointer",
                 fontSize: "14px",
                 fontWeight: 500,
                 color: "#0f172a",
                 lineHeight: 1.5,
                 fontFamily: "inherit",
-                transition: "border-color 150ms, box-shadow 150ms, transform 150ms",
+                transition: "border-color 150ms, box-shadow 150ms",
                 boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#2563eb";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.boxShadow = "0 1px 2px rgba(15, 23, 42, 0.04)";
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "transparent",
               }}
             >
               <span
