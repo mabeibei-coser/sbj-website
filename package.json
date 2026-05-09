@@ -26,14 +26,21 @@
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-slot": "^1.2.4",
     "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "iron-session": "^8.0.4",
+    "lucide-react": "^1.14.0",
     "next": "16.2.3",
     "openai": "^6.34.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^9.0.1",
     "server-only": "^0.0.1",
+    "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
