@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 export type KbType = "policy" | "biz";
 
@@ -25,25 +24,60 @@ export function QaTabs({ active }: QaTabsProps) {
   }
 
   return (
-    <div role="tablist" aria-label="知识库切换" className="flex gap-2 border-b border-[var(--border)] overflow-x-auto scrollbar-none">
+    <div
+      role="tablist"
+      aria-label="知识库切换"
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: "0.5rem",
+        borderBottom: "1px solid #e5e7eb",
+        overflowX: "auto",
+      }}
+    >
       {TABS.map((tab) => {
         const isActive = active === tab.id;
         return (
-          <button
+          <div
             key={tab.id}
             role="tab"
             aria-selected={isActive}
+            tabIndex={0}
             onClick={() => setKb(tab.id)}
-            className={cn(
-              "shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px bg-transparent rounded-none appearance-none outline-none",
-              isActive
-                ? "border-[var(--blue-500)] text-[var(--blue-700)]"
-                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            )}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setKb(tab.id);
+              }
+            }}
+            style={{
+              flexShrink: 0,
+              padding: "0.75rem 1rem",
+              cursor: "pointer",
+              background: "transparent",
+              border: "none",
+              borderBottom: isActive ? "2px solid #2563eb" : "2px solid transparent",
+              marginBottom: "-1px",
+              color: isActive ? "#1d4ed8" : "#64748b",
+              fontSize: "14px",
+              fontWeight: 500,
+              transition: "color 150ms, border-color 150ms",
+              userSelect: "none",
+            }}
           >
-            <span className="block">{tab.label}</span>
-            <span className="block text-xs text-[var(--text-muted)] font-normal mt-0.5">{tab.description}</span>
-          </button>
+            <span style={{ display: "block" }}>{tab.label}</span>
+            <span
+              style={{
+                display: "block",
+                fontSize: "12px",
+                fontWeight: 400,
+                color: "#94a3b8",
+                marginTop: "2px",
+              }}
+            >
+              {tab.description}
+            </span>
+          </div>
         );
       })}
     </div>

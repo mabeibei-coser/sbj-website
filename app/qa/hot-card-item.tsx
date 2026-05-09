@@ -24,12 +24,11 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
 
   return (
     <div
-      className="glass-card"
       style={{
-        border: "1px solid var(--border)",
+        border: "1px solid #e5e7eb",
         borderRadius: "12px",
-        background: "var(--card)",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)",
+        background: "#ffffff",
+        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04)",
       }}
     >
       <div
@@ -59,13 +58,13 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "1.5rem",
-            height: "1.5rem",
+            width: "1.75rem",
+            height: "1.75rem",
             borderRadius: "9999px",
-            background: "var(--blue-100)",
-            color: "var(--blue-700)",
-            fontSize: "11px",
-            fontWeight: 500,
+            background: "#dbeafe",
+            color: "#1d4ed8",
+            fontSize: "12px",
+            fontWeight: 600,
             fontFamily: "var(--font-mono)",
             flexShrink: 0,
           }}
@@ -78,8 +77,8 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
             margin: 0,
             fontSize: "15px",
             fontWeight: 500,
-            color: "var(--text-primary)",
-            lineHeight: 1.4,
+            color: "#0f172a",
+            lineHeight: 1.5,
           }}
         >
           {title}
@@ -88,7 +87,7 @@ export function HotCardItem({ index, title, body, updatedAt }: HotCardItemProps)
         <span
           style={{
             flexShrink: 0,
-            color: "var(--text-muted)",
+            color: "#64748b",
             transition: "transform 200ms",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
             display: "inline-flex",
